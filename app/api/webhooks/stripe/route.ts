@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { sendAdminAlert, sendVendorPO } from '@/lib/twilio';
 import { subscribeToList } from '@/lib/mailchimp';
 import { Resend } from 'resend';
@@ -9,13 +9,6 @@ import VendorPurchaseOrder from '@/components/emails/VendorPurchaseOrder';
 import React from 'react';
 
 export const runtime = 'nodejs';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://obwsdrberchmhgfeisnf.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
-);
-
-const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -29,6 +22,7 @@ export async function POST(req: Request) {
   }
 
   if (event.type === 'checkout.session.completed') {
+    const supabaseAdmin = createAdminClient() as any;
     const session = event.data.object as any;
     const { discountCode, customerEmail } = session.metadata || {};
 
@@ -127,21 +121,29 @@ export async function POST(req: Request) {
       orderDate: new Date().toLocaleDateString(),
     };
 
-    resend.emails.send({
-      from: 'Outerline <noreply@outerline.nyc>',
-      to: customerEmail || session.customer_details?.email,
-      subject: `Outerline Order Receipt #${order.id}`,
-      react: React.createElement(CustomerReceipt, emailData),
-    }).catch(console.error);
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
+      try {
+        const resend = new Resend(resendApiKey);
+        resend.emails.send({
+          from: 'Outerline <noreply@outerline.nyc>',
+          to: customerEmail || session.customer_details?.email,
+          subject: `Outerline Order Receipt #${order.id}`,
+          react: React.createElement(CustomerReceipt, emailData),
+        }).catch(console.error);
 
-    const vendorEmail = process.env.VENDOR_EMAIL;
-    if (vendorEmail) {
-      resend.emails.send({
-        from: 'Outerline Admin <admin@outerline.nyc>',
-        to: vendorEmail,
-        subject: `NEW PO: Order #${order.id}`,
-        react: React.createElement(VendorPurchaseOrder, emailData),
-      }).catch(console.error);
+        const vendorEmail = process.env.VENDOR_EMAIL;
+        if (vendorEmail) {
+          resend.emails.send({
+            from: 'Outerline Admin <admin@outerline.nyc>',
+            to: vendorEmail,
+            subject: `NEW PO: Order #${order.id}`,
+            react: React.createElement(VendorPurchaseOrder, emailData),
+          }).catch(console.error);
+        }
+      } catch (emailErr) {
+        console.error('Webhook email dispatch error:', emailErr);
+      }
     }
 
     // Mailchimp sync

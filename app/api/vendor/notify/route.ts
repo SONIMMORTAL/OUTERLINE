@@ -4,9 +4,6 @@ import { sendVendorPO } from '@/lib/twilio';
 import { Resend } from 'resend';
 import VendorPurchaseOrder from '@/components/emails/VendorPurchaseOrder';
 import React from 'react';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
@@ -64,13 +61,19 @@ export async function POST(req: Request) {
     };
 
     const vendorEmail = process.env.VENDOR_EMAIL;
-    if (vendorEmail) {
-      await resend.emails.send({
-        from: 'Outerline Admin <admin@outerline.nyc>',
-        to: vendorEmail,
-        subject: `NEW PO: Order #${orderData.id} (RESENT)`,
-        react: React.createElement(VendorPurchaseOrder, emailData),
-      });
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (vendorEmail && resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
+      try {
+        const resend = new Resend(resendApiKey);
+        await resend.emails.send({
+          from: 'Outerline Admin <admin@outerline.nyc>',
+          to: vendorEmail,
+          subject: `NEW PO: Order #${orderData.id} (RESENT)`,
+          react: React.createElement(VendorPurchaseOrder, emailData),
+        });
+      } catch (emailErr) {
+        console.error('Vendor email send failed:', emailErr);
+      }
     }
 
     await (supabase
