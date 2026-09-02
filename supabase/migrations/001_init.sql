@@ -163,20 +163,30 @@ CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
 
--- Orders (user can read own, admin all)
-CREATE POLICY "Users can view own orders"
-  ON orders FOR SELECT
-  USING (auth.uid() = customer_id);
+-- Orders (storefront checkout & viewing)
+CREATE POLICY "Allow storefront to create orders"
+  ON orders FOR INSERT
+  WITH CHECK (true);
 
-CREATE POLICY "Users can view own order items"
+CREATE POLICY "Allow storefront to view orders"
+  ON orders FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow storefront to create order items"
+  ON order_items FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow storefront to view order items"
   ON order_items FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM orders
-      WHERE orders.id = order_items.order_id
-      AND orders.customer_id = auth.uid()
-    )
-  );
+  USING (true);
+
+CREATE POLICY "Allow storefront to create discounts"
+  ON discounts FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Allow storefront to view discounts"
+  ON discounts FOR SELECT
+  USING (is_active = true);
 
 -- Admins can do everything on all tables (using simple role check if authenticated)
 -- Note: Assuming auth.jwt() ->> 'role' is not used here but rather the profiles table role,
