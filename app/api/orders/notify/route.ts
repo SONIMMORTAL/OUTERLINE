@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sendInstantOrderSMS } from '@/lib/twilio'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { saveLocalOrder } from '@/lib/orders-store'
 import { Resend } from 'resend'
 
@@ -84,9 +85,9 @@ export async function POST(req: Request) {
     })
 
     // 4. Also insert into Supabase orders table if configured
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
       try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
         await (supabase.from('orders') as any).insert({
           customer_email: customerEmail,
           total_amount: Number(totalAmount) || 0,
