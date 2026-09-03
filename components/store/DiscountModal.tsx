@@ -12,29 +12,75 @@ export default function DiscountModal() {
   const [discountCode, setDiscountCode] = useState('')
 
   useEffect(() => {
-    const isDismissed = localStorage.getItem('outerline-discount-dismissed')
-    if (isDismissed) return
+    // 1. Never show if already seen in current browser session
+    if (typeof window === 'undefined') return
+    const seenThisSession = sessionStorage.getItem('outerline-discount-seen')
+    if (seenThisSession) return
 
-    // Show after 5 seconds
-    const timer = setTimeout(() => setIsOpen(true), 5000)
-
-    // Show on exit intent
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0) {
-        setIsOpen(true)
+    // 2. Check 14-day dismissal cooldown in localStorage
+    const dismissedAt = localStorage.getItem('outerline-discount-dismissed')
+    if (dismissedAt) {
+      const parsedTime = parseInt(dismissedAt, 10)
+      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
+      // If valid timestamp and within 14 days, suppress popup
+      if (!isNaN(parsedTime) && Date.now() - parsedTime < fourteenDaysMs) {
+        return
+      }
+      // If legacy boolean "true", also respect dismissal
+      if (dismissedAt === 'true') {
+        return
       }
     }
+
+    let hasTriggered = false
+    const triggerModal = () => {
+      if (hasTriggered) return
+      hasTriggered = true
+      sessionStorage.setItem('outerline-discount-seen', 'true')
+      setIsOpen(true)
+    }
+
+    // 3. Gentle delay: trigger after 20 seconds of thoughtful browsing
+    const timer = setTimeout(() => {
+      triggerModal()
+    }, 20000)
+
+    // 4. Intent trigger: user scrolls at least 45% down the page
+    const handleScroll = () => {
+      const scrollY = window.scrollY
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight
+      if (docHeight > 0 && scrollY / docHeight > 0.45) {
+        triggerModal()
+      }
+    }
+
+    // 5. Restrained exit intent: only activates after 12s on page
+    let exitIntentArmed = false
+    const armExitIntent = setTimeout(() => {
+      exitIntentArmed = true
+    }, 12000)
+
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (exitIntentArmed && e.clientY <= 0) {
+        triggerModal()
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
     document.addEventListener('mouseleave', handleMouseLeave)
 
     return () => {
       clearTimeout(timer)
+      clearTimeout(armExitIntent)
+      window.removeEventListener('scroll', handleScroll)
       document.removeEventListener('mouseleave', handleMouseLeave)
     }
   }, [])
 
   const handleDismiss = () => {
     setIsOpen(false)
-    localStorage.setItem('outerline-discount-dismissed', 'true')
+    sessionStorage.setItem('outerline-discount-seen', 'true')
+    localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,11 +101,13 @@ export default function DiscountModal() {
         navigator.clipboard.writeText(code).catch(() => {})
       }
       setStatus('success')
-      localStorage.setItem('outerline-discount-dismissed', 'true')
+      sessionStorage.setItem('outerline-discount-seen', 'true')
+      localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
     } catch {
       setDiscountCode('OUTER15')
       setStatus('success')
-      localStorage.setItem('outerline-discount-dismissed', 'true')
+      sessionStorage.setItem('outerline-discount-seen', 'true')
+      localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
     }
   }
 
@@ -125,7 +173,7 @@ export default function DiscountModal() {
                             placeholder="Enter your email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-[#FFFFFF] border border-[#E5E5E5] text-[#0A192F] px-4 py-3 rounded-lg focus:outline-none focus:border-[#0A192F] transition-colors placeholder:text-[#E5E5E5]"
+                            className="w-full bg-[#FFFFFF] border border-[#E5E5E5] text-[#0A192F] px-4 py-3 rounded-lg focus:outline-none focus:border-[#0A192F] transition-colors placeholder:text-[#999999]"
                           />
                           <button
                             type="submit"
