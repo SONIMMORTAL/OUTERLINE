@@ -5,7 +5,12 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function proxy(request: NextRequest) {
   // Update session first
-  const response = await updateSession(request)
+  let response = NextResponse.next({ request: { headers: request.headers } })
+  try {
+    response = await updateSession(request)
+  } catch (err) {
+    // If Supabase is unreachable, continue serving pages gracefully
+  }
 
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')

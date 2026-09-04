@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 export default function ShippingPolicyPage() {
   return (
-    <div className="bg-white min-h-screen py-16 md:py-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-32 md:pt-36 pb-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#666666] mb-12">
           <Link href="/" className="hover:text-[#0A192F] transition-colors">Home</Link>
@@ -22,13 +22,13 @@ export default function ShippingPolicyPage() {
             Worldwide shipping via USPS, UPS, FedEx, and DHL.
           </p>
           <p>
-            Orders ship within 10–15 business days unless otherwise stated in the product listing.
+            Standard shipping takes <strong>3–7 business days</strong> unless otherwise stated in the product listing. Free standard shipping is automatically applied to all domestic orders over $150.
           </p>
           <p>
-            Shipping rates are calculated at checkout.
+            Shipping rates can be estimated in your cart or calculated at checkout.
           </p>
           <p>
-            Tracking information is automatically sent once an order ships.
+            Tracking information is automatically sent once an order ships. If you have questions about your delivery, reach out to <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a>.
           </p>
           <p>
             Shipping addresses cannot be changed after an order is placed. Customers are responsible for entering a complete and accurate shipping address at checkout.

@@ -3,15 +3,15 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
-import { ShoppingBag, Menu, X } from 'lucide-react'
+import { ShoppingCart, Menu, X } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cart'
 
 const NAV_LINKS = [
   { name: 'SHOP ALL', href: '/collections/all' },
   { name: 'BEEN BROOKLYN', href: '/collections/been-brooklyn' },
   { name: 'SO NEW YORK', href: '/collections/so-new-york' },
-  { name: 'HOODIES', href: '/collections/hoodies' },
-  { name: 'TEES', href: '/collections/tees' },
+  { name: 'TESTIMONIALS', href: '/testimonials' },
+  { name: 'SOCIAL', href: '/social' },
 ]
 
 export default function Navbar() {
@@ -105,7 +105,7 @@ export default function Navbar() {
               className="relative p-2 text-[#0A192F] hover:text-[#666666] transition-colors"
               aria-label="Open cart"
             >
-              <ShoppingBag className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
+              <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" strokeWidth={1.5} />
               <AnimatePresence>
                 {cartItemCount > 0 && (
                   <motion.span
@@ -153,7 +153,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-2xl font-serif tracking-[0.2em] text-[#0A192F] hover:text-[#0A192F] transition-colors uppercase"
+                    className="text-2xl font-brand font-bold tracking-[0.16em] text-[#0A192F] hover:text-[#0A192F] transition-colors uppercase"
                   >
                     {link.name}
                   </Link>

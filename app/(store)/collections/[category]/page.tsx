@@ -62,13 +62,18 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
   })).filter(g => g.products.length > 0) : []
 
   return (
-    <div className="w-full flex flex-col py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
-      <div className="flex flex-col space-y-4 mb-16">
-        <h1 className="font-serif text-4xl md:text-5xl text-[#0A192F] capitalize">
+    <div className="w-full flex flex-col pt-28 sm:pt-32 md:pt-36 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
+      <div className="flex flex-col space-y-3 mb-14 border-b border-[#E5E5E5] pb-8">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase font-mono tracking-[0.25em] text-[#0A192F]/60 font-semibold">
+            {slug === 'all' ? 'OUTERLINE LOOKBOOK' : 'OUTERLINE COLLECTION'}
+          </span>
+        </div>
+        <h1 className="font-brand text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.14em] text-[#0A192F] uppercase leading-tight">
           {categoryName}
         </h1>
-        <p className="text-[#666666] text-sm tracking-widest uppercase">
-          {products?.length || 0} {products?.length === 1 ? 'Product' : 'Products'}
+        <p className="text-[#666666] text-xs font-mono tracking-[0.15em] uppercase">
+          {products?.length || 0} {products?.length === 1 ? 'Garment' : 'Garments'} Available
         </p>
       </div>
 
@@ -78,9 +83,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             <div key={group.collection.slug} className="flex flex-col space-y-8">
               {index > 0 && <hr className="border-[#E5E5E5] my-8" />}
               <div className="flex flex-col space-y-3">
-                <span className="text-[#0A192F] text-[10px] uppercase tracking-widest">Collection</span>
-                <h2 className="font-serif text-3xl text-[#0A192F]">{group.collection.name}</h2>
-                <p className="text-[#666666] max-w-2xl">{group.collection.description}</p>
+                <span className="text-[#0A192F] text-[10px] uppercase font-mono tracking-[0.25em] font-semibold">Collection</span>
+                <h2 className="font-brand text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.12em] text-[#0A192F] uppercase">{group.collection.name}</h2>
+                <p className="text-[#666666] max-w-2xl text-sm leading-relaxed">{group.collection.description}</p>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 lg:gap-x-8">
                 {group.products.map((product) => (

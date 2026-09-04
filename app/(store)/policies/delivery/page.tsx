@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 export default function DeliveryPolicyPage() {
   return (
-    <div className="bg-white min-h-screen py-16 md:py-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-32 md:pt-36 pb-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#666666] mb-12">
           <Link href="/" className="hover:text-[#0A192F] transition-colors">Home</Link>
@@ -19,13 +19,16 @@ export default function DeliveryPolicyPage() {
 
         <div className="space-y-6 text-[#333333] leading-relaxed">
           <p>
-            Once an order is transferred to the carrier, delivery is subject to the carrier's procedures and timelines.
+            Standard domestic delivery typically arrives within <strong>3–7 business days</strong> following carrier acceptance.
+          </p>
+          <p>
+            Once an order is transferred to the carrier, delivery is subject to the carrier's procedures and transit timelines.
           </p>
           <p>
             A carrier scan marked "Delivered" constitutes confirmation of delivery to the address provided at checkout.
           </p>
           <p>
-            Claims for packages marked delivered must be filed directly with the carrier. We do not issue refunds or replacements for orders marked delivered due to claims of non-receipt.
+            Claims for packages marked delivered must be filed directly with the carrier. If you require assistance with your carrier claim, contact <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a>.
           </p>
           <p>
             Orders returned due to incorrect or incomplete addresses are the buyer's responsibility, including reshipping costs.

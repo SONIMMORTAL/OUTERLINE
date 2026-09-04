@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 export default function ReturnsPolicyPage() {
   return (
-    <div className="bg-white min-h-screen py-16 md:py-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-32 md:pt-36 pb-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#666666] mb-12">
           <Link href="/" className="hover:text-[#0A192F] transition-colors">Home</Link>
@@ -25,7 +25,7 @@ export default function ReturnsPolicyPage() {
             Returns or exchanges are accepted only for defective items or items shipped in error.
           </p>
           <p>
-            Requests must be submitted to <a href="mailto:outerline@gmail.com" className="font-mono hover:underline">outerline@gmail.com</a> within 7 days of confirmed delivery.
+            Requests must be submitted to <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a> within 7 days of confirmed delivery. Our customer service team reviews all inquiries within 48–72 hours.
           </p>
           <p>
             Approved items must be unworn, unwashed, and returned in original condition and packaging.

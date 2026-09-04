@@ -67,10 +67,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Content */}
           <div className="p-4 flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-widest text-[#0A192F] font-medium">
+            <span className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#0A192F]/70 font-semibold">
               {collection}
             </span>
-            <h3 className="font-serif text-[#0A192F] text-sm line-clamp-1 group-hover:text-[#0A192F] transition-colors">
+            <h3 className="font-serif text-[#0A192F] text-sm font-medium line-clamp-1 group-hover:text-[#0A192F] transition-colors">
               {title}
             </h3>
             <div className="flex items-center gap-2 mt-1">

@@ -10,7 +10,7 @@ export default function PoliciesPage() {
   ]
 
   return (
-    <div className="bg-white min-h-screen py-16 md:py-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-32 md:pt-36 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#666666] mb-12">
           <Link href="/" className="hover:text-[#0A192F] transition-colors">Home</Link>

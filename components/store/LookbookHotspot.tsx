@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ShoppingBag } from 'lucide-react'
+import { X, ShoppingCart } from 'lucide-react'
 import Image from 'next/image'
 
 interface HotspotProps {
@@ -95,8 +95,8 @@ export function LookbookHotspot({ x, y, product }: HotspotProps) {
                 disabled={!selectedSize}
                 className="w-full py-2.5 bg-[#0A192F] text-[#FFFFFF] text-xs font-serif tracking-widest uppercase disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors hover:bg-[#000000]"
               >
-                <ShoppingBag className="w-4 h-4" />
-                Add to Bag
+                <ShoppingCart className="w-4 h-4" />
+                Add to Cart
               </button>
             </div>
           </motion.div>

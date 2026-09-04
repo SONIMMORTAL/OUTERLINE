@@ -36,9 +36,9 @@ export async function POST(req: Request) {
       console.error('SMS notification error (skipping):', smsErr)
     }
 
-    // 2. Dispatch Email to 1outerline@gmail.com
+    // 2. Dispatch Email to support@outerline.com
     const resendApiKey = process.env.RESEND_API_KEY
-    const adminEmail = process.env.ADMIN_EMAIL || '1outerline@gmail.com'
+    const adminEmail = process.env.ADMIN_EMAIL || 'support@outerline.com'
 
     if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
       try {

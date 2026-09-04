@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { ShoppingBag, Check, ChevronRight, Ruler } from 'lucide-react'
+import { ShoppingCart, Check, ChevronRight, Ruler } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { useCartStore } from '@/lib/store/cart'
 import { toast } from 'sonner'
@@ -108,7 +108,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
       image: currentFront || activeImage,
     })
 
-    toast.success(`Added ${product.title} (${selectedColor} / ${selectedSize}) to bag!`)
+    toast.success(`Added ${product.title} (${selectedColor} / ${selectedSize}) to cart!`)
   }
 
   const getSwatchStyle = (colorName: string): React.CSSProperties => {
@@ -253,10 +253,10 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
       <div className="flex flex-col">
         {/* Title & Price Header */}
         <div className="mb-8">
-          <span className="text-[10px] uppercase tracking-widest font-medium text-[#0A192F] mb-3 block">
+          <span className="text-[10px] uppercase font-mono tracking-[0.25em] font-semibold text-[#0A192F]/70 mb-2 block">
             {product.collection || `${product.category} Collection`}
           </span>
-          <h1 className="font-serif text-3xl md:text-4xl text-[#0A192F] mb-4">
+          <h1 className="font-brand text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.08em] text-[#0A192F] uppercase mb-4 leading-tight">
             {product.title}
           </h1>
           <div className="flex items-center gap-3">
@@ -336,13 +336,13 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             </div>
           )}
 
-          {/* Add to Bag Button */}
+          {/* Add to Cart Button */}
           <button
             onClick={handleAddToCart}
-            className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 hover:bg-[#000000] transition-colors shadow-sm"
+            className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 hover:bg-[#000000] transition-colors shadow-sm cursor-pointer"
           >
-            <ShoppingBag className="w-4 h-4" />
-            Add to Bag
+            <ShoppingCart className="w-4 h-4" />
+            Add to Cart
           </button>
 
           {/* Tabs: Specifications & Sizing */}

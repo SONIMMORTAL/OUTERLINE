@@ -17,6 +17,10 @@ export async function updateSession(request: NextRequest) {
       },
     }
   )
-  await supabase.auth.getUser()
+  try {
+    await supabase.auth.getUser()
+  } catch (err) {
+    // Suppress network/fetch error if Supabase project is paused or offline
+  }
   return response
 }

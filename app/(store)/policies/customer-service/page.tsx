@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 export default function CustomerServicePolicyPage() {
   return (
-    <div className="bg-white min-h-screen py-16 md:py-24">
+    <div className="bg-white min-h-screen pt-28 sm:pt-32 md:pt-36 pb-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#666666] mb-12">
           <Link href="/" className="hover:text-[#0A192F] transition-colors">Home</Link>
@@ -19,10 +19,10 @@ export default function CustomerServicePolicyPage() {
 
         <div className="space-y-6 text-[#333333] leading-relaxed">
           <p>
-            Contact: <a href="mailto:1outerline@gmail.com" className="font-mono hover:underline">1outerline@gmail.com</a>
+            All orders are fulfilled directly with speed and precision. For all inquiries, reach out to our team at <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F] font-medium">Support@outerline.com</a>.
           </p>
           <p>
-            Please allow up to 5 business days for a response. Response times may be longer during launches, holidays, and other high-volume periods.
+            Our customer service team responds within <strong>48–72 hours</strong>. Response times may be slightly longer during major drop launches and high-volume holiday periods.
           </p>
           <p>
             All inquiries are reviewed in the order received. Sending multiple messages regarding the same inquiry will not expedite a response.

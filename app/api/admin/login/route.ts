@@ -18,14 +18,14 @@ export async function POST(req: Request) {
 
     // 1. Check Master Admin Credentials
     const defaultAdminUser = (process.env.ADMIN_USERNAME || 'Outer').toLowerCase()
-    const defaultAdminEmail = (process.env.ADMIN_EMAIL || '1outerline@gmail.com').toLowerCase()
+    const defaultAdminEmail = (process.env.ADMIN_EMAIL || 'support@outerline.com').toLowerCase()
     const defaultAdminPass = process.env.ADMIN_PASSWORD || 'Ensink144'
 
     let isAuthenticated = false
     let sessionUser = cleanUser
 
     if (
-      (cleanUser === defaultAdminUser || cleanUser === defaultAdminEmail) &&
+      (cleanUser === defaultAdminUser || cleanUser === defaultAdminEmail || cleanUser === '1outerline@gmail.com') &&
       cleanPass === defaultAdminPass
     ) {
       isAuthenticated = true

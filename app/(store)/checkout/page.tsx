@@ -20,6 +20,7 @@ import {
   Mail
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { calculateTax } from '@/lib/taxes'
 
 /* ==========================================================================
    Payment Method Configuration
@@ -65,14 +66,18 @@ export default function CheckoutPage() {
   if (!mounted) return null
 
   const currentTotal = totalPrice()
-  const shippingCost = currentTotal >= 150 ? 0 : 15
-  const orderTotal = currentTotal + shippingCost
+  const isFreeShipping = currentTotal >= 150
+  const normalizedState = (shippingAddress.state || 'NY').trim().toUpperCase()
+  const shippingCost = isFreeShipping ? 0 : (normalizedState === 'NY' || !shippingAddress.state ? 8 : 10)
+  const taxInfo = calculateTax(currentTotal, normalizedState)
+  const taxAmount = taxInfo.taxAmount
+  const orderTotal = currentTotal + shippingCost + taxAmount
 
   if (items.length === 0 && !orderSubmitted) {
     return (
       <div className="min-h-screen bg-[#FFFFFF] flex flex-col items-center justify-center px-4 py-24">
-        <h1 className="font-serif text-3xl text-[#0A192F] mb-4">Your bag is empty</h1>
-        <p className="text-[#666666] text-sm mb-8">Add items to your bag before checking out.</p>
+        <h1 className="font-serif text-3xl text-[#0A192F] mb-4">Your cart is empty</h1>
+        <p className="text-[#666666] text-sm mb-8">Add items to your cart before checking out.</p>
         <Link
           href="/collections/all"
           className="px-8 py-3.5 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest text-xs uppercase hover:bg-[#000000] transition-colors"
@@ -208,8 +213,8 @@ export default function CheckoutPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-[#0A192F]">What Happens Next</p>
             <ul className="text-xs text-[#666666] space-y-1.5 leading-relaxed">
               <li>1. Complete your payment to <span className="font-mono font-semibold text-[#0A192F]">{PAYPAL_EMAIL}</span> via PayPal if not already completed.</li>
-              <li>2. Send a confirmation email to <a href="mailto:1outerline@gmail.com" className="font-mono text-[#0A192F] underline">1outerline@gmail.com</a> with your name and order items.</li>
-              <li>3. We'll verify your payment and ship within 10–15 business days.</li>
+              <li>2. Send a confirmation email to <a href="mailto:support@outerline.com" className="font-mono text-[#0A192F] underline">Support@outerline.com</a> with your name and order items.</li>
+              <li>3. We'll verify your payment and ship within 3–7 business days.</li>
               <li>4. You'll receive tracking information once your order ships.</li>
             </ul>
           </div>
@@ -234,7 +239,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9]">
+    <div className="min-h-screen bg-[#F9F9F9] pt-16 md:pt-20">
       {/* Breadcrumb */}
       <div className="bg-[#FFFFFF] border-b border-[#E5E5E5]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -528,15 +533,19 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-xs text-[#666666]">
                   <span className="flex items-center gap-1">
                     <Truck className="w-3.5 h-3.5" />
-                    Shipping
+                    Standard Shipping (3–7 business days)
                   </span>
                   <span className={`font-medium ${shippingCost === 0 ? 'text-green-600' : 'text-[#0A192F]'}`}>
                     {shippingCost === 0 ? 'FREE' : `$${shippingCost.toFixed(2)}`}
                   </span>
                 </div>
+                <div className="flex justify-between text-xs text-[#666666]">
+                  <span>{taxInfo.label}</span>
+                  <span className="text-[#0A192F] font-medium font-mono">${taxAmount.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between text-sm font-semibold text-[#0A192F] pt-2 border-t border-[#E5E5E5]">
                   <span className="uppercase tracking-widest text-xs">Total</span>
-                  <span className="text-lg">${orderTotal.toFixed(2)}</span>
+                  <span className="text-lg font-mono">${orderTotal.toFixed(2)}</span>
                 </div>
               </div>
 
