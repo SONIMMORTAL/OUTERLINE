@@ -67,7 +67,7 @@ export default function AboutPage() {
           <div className="lg:col-span-5">
             <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-[#F3F3F3] border border-[#E5E5E5]">
               <Image
-                src="/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png"
+                src="/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png"
                 alt="Outerline NYC - The Dynamic Duo Model Shoot"
                 fill
                 className="object-cover"

@@ -48,7 +48,7 @@ const INITIAL_TESTIMONIALS: Testimonial[] = [
     productSlug: 'been-brooklyn-hoodie',
     comment: 'The 10oz heavyweight fleece is completely unmatched. You can feel the quality the moment you put it on. Structured hood, heavy cuffs, and keeps the winter wind out. Five boroughs pride on lock.',
     type: 'photo',
-    mediaUrl: '/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png',
+    mediaUrl: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
     date: 'August 28, 2026'
   },
   {
@@ -181,7 +181,7 @@ export default function TestimonialsPage() {
         productSlug: formProduct.toLowerCase().replace(/\s+/g, '-'),
         comment: formComment.trim(),
         type: mediaType,
-        mediaUrl: mediaPreview || '/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png',
+        mediaUrl: mediaPreview || '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
         isUserUploaded: true,
         date: 'Just now'
       }

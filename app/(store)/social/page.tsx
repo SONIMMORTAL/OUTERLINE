@@ -61,7 +61,7 @@ export default function SocialPage() {
 
   const feedItems = [
     {
-      image: '/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png',
+      image: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
       caption: 'Been Brooklyn heavyweight hoodie in blackout. Engineered for the borough. 10oz fleece.',
       handle: '@outerlinenyc',
       tag: 'DROP 01',

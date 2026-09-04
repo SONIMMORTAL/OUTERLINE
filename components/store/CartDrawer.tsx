@@ -50,7 +50,7 @@ const UPSELL_PRODUCTS = [
     slug: 'been-brooklyn-hoodie',
     sku: 'BB-HD-001',
     price: 55,
-    image: '/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png',
+    image: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
     defaultColor: 'BLACK/BLACK',
     sizes: ['S', 'M', 'L', 'XL']
   },

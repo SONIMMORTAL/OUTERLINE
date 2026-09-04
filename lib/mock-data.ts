@@ -38,7 +38,7 @@ export const collections: Collection[] = [
     "name": "Been Brooklyn",
     "slug": "been-brooklyn",
     "description": "Forged in Brooklyn. Built with heavyweight fleece, raw NYC energy, and iconic borough pride.",
-    "image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png"
+    "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png"
   },
   {
     "name": "So New York",
@@ -68,14 +68,14 @@ export const mockProducts: Product[] = [
       "Nickel eyelets"
     ],
     "editorial_story": "Heavyweight 10oz fleece built to endure the city.",
-    "model_image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
+    "model_image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
     "images": [
-      "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
+      "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_brookyn_blk n wh_blk_hoodie.jpg"
     ],
     "images_back": [
-      "/outer-line-models-uniform-1200x1500/exec-b115ba6c-47e2-408f-b2f2-22c3f7c91211-4x5.png",
+      "/been-brooklyn-blk-hood-blk-text-model-new.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg"
     ],
@@ -84,32 +84,32 @@ export const mockProducts: Product[] = [
         "id": "1-black-black-s",
         "size": "S",
         "color": "Black/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-b115ba6c-47e2-408f-b2f2-22c3f7c91211-4x5.png",
+        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
         "inventory_quantity": 15
       },
       {
         "id": "1-black-black-m",
         "size": "M",
         "color": "Black/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-b115ba6c-47e2-408f-b2f2-22c3f7c91211-4x5.png",
+        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
         "inventory_quantity": 15
       },
       {
         "id": "1-black-black-l",
         "size": "L",
         "color": "Black/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-b115ba6c-47e2-408f-b2f2-22c3f7c91211-4x5.png",
+        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
         "inventory_quantity": 15
       },
       {
         "id": "1-black-black-xl",
         "size": "XL",
         "color": "Black/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-400b6388-f8e0-4cd8-9e09-f7c5bbd41c20-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-b115ba6c-47e2-408f-b2f2-22c3f7c91211-4x5.png",
+        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
         "inventory_quantity": 15
       },
       {
