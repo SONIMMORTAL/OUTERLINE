@@ -58,7 +58,7 @@ export const mockProducts: Product[] = [
     "category": "hoodies",
     "collection": "Been Brooklyn",
     "collection_slug": "been-brooklyn",
-    "description": "forged out of the raw energy of brooklyn. Made of heavyweight cotton with an iconic nyc style",
+    "description": "Forged in Brooklyn. Heavyweight 10oz fleece built to endure the city.",
     "specs": [
       "10 oz./yd\u00b2 (US) 16.7 oz /L yd (CA), 70/30 ring-spun cotton/polyester blend 3-end fleece with 100% cotton face, 32 singles",
       "Generous fit with fleece lined hood",

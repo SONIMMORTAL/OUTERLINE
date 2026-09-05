@@ -551,7 +551,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           {/* Tabs: Specifications & Sizing */}
           <Tabs.Root defaultValue="details" className="w-full pt-8 border-t border-[#E5E5E5]">
             <Tabs.List className="flex w-full border-b border-[#E5E5E5]">
-              {['DETAILS & SPECS', 'EDITORIAL STORY', 'SIZING & CARE'].map((tab) => {
+              {['DETAILS & SPECS', 'SIZING & CARE'].map((tab) => {
                 const val = tab.toLowerCase().split(' ')[0]
                 return (
                   <Tabs.Trigger
@@ -585,16 +585,15 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                   </ul>
                 </div>
               )}
-            </Tabs.Content>
 
-            {/* Editorial Story Tab */}
-            <Tabs.Content value="editorial" className="pt-6 space-y-3 text-xs leading-relaxed outline-none">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-[#0A192F] block">
-                The Brooklyn Narrative
-              </span>
-              <p className="text-[#666666] text-sm leading-relaxed font-serif italic">
-                "{product.editorial_story || 'Outerline is a high-performance, editorial streetwear brand delivering the kinetic energy of NYC drop culture with timeless luxury craftsmanship.'}"
-              </p>
+              {/* Story / Narrative note at bottom of product description */}
+              {product.editorial_story && (
+                <div className="pt-3 border-t border-[#E5E5E5]">
+                  <p className="text-[#666666] text-xs leading-relaxed font-serif italic">
+                    "{product.editorial_story}"
+                  </p>
+                </div>
+              )}
             </Tabs.Content>
 
             {/* Sizing & Care Tab */}
