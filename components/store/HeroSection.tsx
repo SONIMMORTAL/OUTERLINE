@@ -32,18 +32,18 @@ export function HeroSection() {
       <div className="absolute inset-0 z-0">
         {/* Desktop Hero Photography */}
         <Image
-          src="/HERO SECTION.png"
+          src="/NEW HRO.png"
           alt="Outerline NYC — We Belong Here"
           fill
           priority
           quality={95}
-          className="hidden md:block object-cover object-center md:object-[center_25%]"
+          className="hidden md:block object-cover object-center"
           sizes="100vw"
         />
 
-        {/* Mobile Hero Photography (Optimized 1536x2752 Portrait) */}
+        {/* Mobile Hero Photography (Optimized Vertical Portrait) */}
         <Image
-          src="/MOBILE HERO.png"
+          src="/NEW HRO MOBILE.png"
           alt="Outerline NYC — We Belong Here"
           fill
           priority
