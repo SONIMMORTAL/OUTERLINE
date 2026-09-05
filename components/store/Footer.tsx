@@ -131,7 +131,7 @@ export default function Footer() {
               <div className="flex items-center gap-4">
                 {/* Instagram */}
                 <a 
-                  href="https://instagram.com/outerlinenyc" 
+                  href="https://instagram.com/outerline_usa" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="Outerline on Instagram"
@@ -144,7 +144,7 @@ export default function Footer() {
 
                 {/* TikTok */}
                 <a 
-                  href="https://tiktok.com/@outerlinenyc" 
+                  href="https://tiktok.com/@Outerlineusa" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="Outerline on TikTok"

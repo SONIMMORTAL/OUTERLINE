@@ -11,9 +11,9 @@ export default function SocialPage() {
   const socialChannels = [
     {
       name: 'Instagram',
-      handle: '@outerlinenyc',
+      handle: '@outerline_usa',
       desc: 'Lookbooks, editorial model shoots, drop countdowns, and NYC street style.',
-      url: 'https://instagram.com/outerlinenyc',
+      url: 'https://instagram.com/outerline_usa',
       stat: 'Daily Stories & Drops',
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -23,9 +23,9 @@ export default function SocialPage() {
     },
     {
       name: 'TikTok',
-      handle: '@outerlinenyc',
+      handle: '@Outerlineusa',
       desc: 'Behind-the-scenes Brooklyn tailoring, fleece wear-tests, and viral styling clips.',
-      url: 'https://tiktok.com/@outerlinenyc',
+      url: 'https://tiktok.com/@Outerlineusa',
       stat: 'Streetwear Videos & Fits',
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@ export default function SocialPage() {
     {
       image: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
       caption: 'Been Brooklyn heavyweight hoodie in blackout. Engineered for the borough. 10oz fleece.',
-      handle: '@outerlinenyc',
+      handle: '@outerline_usa',
       tag: 'DROP 01',
       likes: '1.4k',
       comments: '128'
@@ -71,7 +71,7 @@ export default function SocialPage() {
     {
       image: '/SONY WHITE & PINKMODEL.png',
       caption: 'So New York kinetic pink & white palette. Summer drop energy live on the store.',
-      handle: '@outerlinenyc',
+      handle: '@outerline_usa',
       tag: 'EDITORIAL',
       likes: '2.1k',
       comments: '204'
@@ -79,7 +79,7 @@ export default function SocialPage() {
     {
       image: '/outer-line-models-uniform-1200x1500/exec-9ed0ddf7-4e23-4985-b5c2-e9b1518a1620-4x5.png',
       caption: 'Crafted in NYC. When New York sneezes, the world catches a cold. We embody the culture.',
-      handle: '@outerlinenyc',
+      handle: '@outerline_usa',
       tag: 'COMMUNITY',
       likes: '980',
       comments: '87'
@@ -87,7 +87,7 @@ export default function SocialPage() {
     {
       image: '/BEEN BROOKLYN BLACK SWEATER model.png',
       caption: 'Five boroughs swagger. Heavyweight 3-end fleece with clean drape.',
-      handle: '@outerlinenyc',
+      handle: '@outerline_usa',
       tag: 'STREETWEAR',
       likes: '3.2k',
       comments: '315'

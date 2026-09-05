@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { ShoppingCart, Check, ChevronRight, Ruler } from 'lucide-react'
+import { ShoppingCart, Check, ChevronLeft, ChevronRight, Ruler, Maximize2, X } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { useCartStore } from '@/lib/store/cart'
 import { toast } from 'sonner'
@@ -18,24 +18,38 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const imagesBack = product.images_back || []
   const modelImage = product.model_image || null
   
-  // Build paired gallery: Put front views alongside their corresponding back views
+  // Build paired gallery: Put front views alongside their corresponding back views without duplicates
   const buildGallery = () => {
-    const gallery: { url: string; type: 'model' | 'front' | 'back'; label?: string }[] = []
-    
-    // Distinct model editorial photo if present and separate from product shots
-    if (modelImage && !images.includes(modelImage)) {
-      gallery.push({ url: modelImage, type: 'model', label: 'EDITORIAL' })
+    const galleryItems: { url: string; type: 'model' | 'front' | 'back'; label?: string }[] = []
+    const seenUrls = new Set<string>()
+
+    const addImage = (url: string, type: 'model' | 'front' | 'back', label?: string) => {
+      if (url && !seenUrls.has(url)) {
+        seenUrls.add(url)
+        galleryItems.push({ url, type, label })
+      }
     }
-    
-    // Pair each front view directly with its matching back view
+
+    // Model editorial photo first if present
+    if (modelImage) {
+      addImage(modelImage, 'model', 'EDITORIAL')
+    }
+
+    // Pair front and back views
     images.forEach((img: string, idx: number) => {
-      gallery.push({ url: img, type: img === modelImage ? 'model' : 'front', label: 'FRONT' })
+      addImage(img, img === modelImage ? 'model' : 'front', 'FRONT')
       if (imagesBack && imagesBack[idx]) {
-        gallery.push({ url: imagesBack[idx], type: 'back', label: 'BACK' })
+        addImage(imagesBack[idx], 'back', 'BACK')
       }
     })
-    
-    return gallery
+
+    // Include any variant specific views
+    variants.forEach(v => {
+      if (v.image) addImage(v.image, 'front', v.color ? `${v.color.toUpperCase()}` : 'FRONT')
+      if (v.image_back) addImage(v.image_back, 'back', v.color ? `${v.color.toUpperCase()} BACK` : 'BACK')
+    })
+
+    return galleryItems
   }
   
   const gallery = buildGallery()
@@ -50,6 +64,15 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const [activeImage, setActiveImage] = useState<string>(gallery[0]?.url || images[0] || '/placeholder.jpg')
   const [activeImageType, setActiveImageType] = useState<'model' | 'front' | 'back'>(gallery[0]?.type || 'front')
   const [sizeGuideOpen, setSizeGuideOpen] = useState<boolean>(false)
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false)
+
+  const thumbnailsRef = useRef<HTMLDivElement>(null)
+  const lightboxThumbnailsRef = useRef<HTMLDivElement>(null)
+  const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([])
+  const lightboxThumbnailRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
   
   const addItem = useCartStore((s) => s.addItem)
 
@@ -57,6 +80,115 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const currentVariant = variants.find(v => v.color === selectedColor) || variants[0]
   const currentFront = currentVariant?.image || images[0]
   const currentBack = currentVariant?.image_back || imagesBack[0]
+
+  // Active image index in gallery
+  const currentIndex = Math.max(0, gallery.findIndex(item => item.url === activeImage))
+
+  // Cycle to next / prev image
+  const goToNextImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (gallery.length <= 1) return
+    const nextIdx = (currentIndex + 1) % gallery.length
+    const nextItem = gallery[nextIdx]
+    handleThumbnailClick(nextItem.url, nextItem.type)
+  }
+
+  const goToPrevImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (gallery.length <= 1) return
+    const prevIdx = (currentIndex - 1 + gallery.length) % gallery.length
+    const prevItem = gallery[prevIdx]
+    handleThumbnailClick(prevItem.url, prevItem.type)
+  }
+
+  // Auto-scroll thumbnails when active image changes
+  useEffect(() => {
+    if (thumbnailRefs.current[currentIndex]) {
+      thumbnailRefs.current[currentIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      })
+    }
+    if (isLightboxOpen && lightboxThumbnailRefs.current[currentIndex]) {
+      lightboxThumbnailRefs.current[currentIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      })
+    }
+  }, [currentIndex, isLightboxOpen])
+
+  // Keyboard navigation and body scroll lock for Lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) {
+      document.body.style.overflow = ''
+      return
+    }
+
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false)
+      } else if (e.key === 'ArrowRight') {
+        if (gallery.length <= 1) return
+        const nextIdx = (currentIndex + 1) % gallery.length
+        const nextItem = gallery[nextIdx]
+        setActiveImage(nextItem.url)
+        setActiveImageType(nextItem.type)
+      } else if (e.key === 'ArrowLeft') {
+        if (gallery.length <= 1) return
+        const prevIdx = (currentIndex - 1 + gallery.length) % gallery.length
+        const prevItem = gallery[prevIdx]
+        setActiveImage(prevItem.url)
+        setActiveImageType(prevItem.type)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isLightboxOpen, currentIndex, gallery])
+
+  // Touch swipe support
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > 50
+    const isRightSwipe = distance < -50
+    if (isLeftSwipe) {
+      goToNextImage()
+    } else if (isRightSwipe) {
+      goToPrevImage()
+    }
+  }
+
+  // Scroll thumbnails strip left / right
+  const scrollThumbnails = (direction: 'left' | 'right') => {
+    if (thumbnailsRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220
+      thumbnailsRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
+
+  const scrollLightboxThumbnails = (direction: 'left' | 'right') => {
+    if (lightboxThumbnailsRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220
+      lightboxThumbnailsRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
 
   // Map color selection to the correct garment image
   const handleColorSelect = (color: string) => {
@@ -154,10 +286,20 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
       {/* Left Column: Live Interactive Gallery — 4:5 Standard */}
       <div className="flex flex-col space-y-4">
-        <div className="aspect-[4/5] rounded-lg border border-[#E5E5E5] relative overflow-hidden bg-[#F9F9F9] transition-all duration-300">
+        <div 
+          className="aspect-[4/5] rounded-lg border border-[#E5E5E5] relative overflow-hidden bg-[#F9F9F9] transition-all duration-300 group cursor-zoom-in"
+          onClick={() => setIsLightboxOpen(true)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          title="Click to expand full screen gallery"
+        >
           {/* Quick Front / Back Toggle Pill */}
           {currentBack && (
-            <div className="absolute top-4 right-4 z-20 flex bg-white/95 backdrop-blur-md rounded-full p-1 border border-[#E5E5E5] shadow-xs text-xs font-mono">
+            <div 
+              className="absolute top-4 right-4 z-20 flex bg-white/95 backdrop-blur-md rounded-full p-1 border border-[#E5E5E5] shadow-xs text-xs font-mono"
+              onClick={(e) => e.stopPropagation()}
+            >
               <button 
                 type="button"
                 onClick={() => {
@@ -170,7 +312,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                     setActiveImageType('front')
                   }
                 }}
-                className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold ${
+                className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold cursor-pointer ${
                   activeImageType === 'front' || activeImageType === 'model'
                     ? 'bg-[#0A192F] text-white' 
                     : 'text-[#666666] hover:text-[#0A192F]'
@@ -190,7 +332,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                     setActiveImageType('back')
                   }
                 }}
-                className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold ${
+                className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold cursor-pointer ${
                   activeImageType === 'back'
                     ? 'bg-[#0A192F] text-white' 
                     : 'text-[#666666] hover:text-[#0A192F]'
@@ -201,13 +343,41 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             </div>
           )}
 
+          {/* Left / Right Chevron Controls On Image */}
+          {gallery.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={goToPrevImage}
+                aria-label="Previous image"
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md border border-[#E5E5E5] shadow-md flex items-center justify-center text-[#0A192F] hover:bg-[#0A192F] hover:text-white transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={goToNextImage}
+                aria-label="Next image"
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white/90 backdrop-blur-md border border-[#E5E5E5] shadow-md flex items-center justify-center text-[#0A192F] hover:bg-[#0A192F] hover:text-white transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {/* Click To Enlarge Indicator Badge */}
+          <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-[#E5E5E5] text-[10px] font-mono tracking-wider text-[#0A192F] shadow-xs pointer-events-none">
+            <Maximize2 className="w-3 h-3 text-[#0A192F]" />
+            <span>EXPAND • {currentIndex + 1} / {gallery.length}</span>
+          </div>
+
           {activeImage ? (
             <Image 
               src={activeImage} 
               alt={product.title} 
               fill 
               sizes="(max-width: 1024px) 100vw, 50vw"
-              className={`${getImageFit()} transition-all duration-500`} 
+              className={`${getImageFit()} transition-all duration-300`} 
               priority
               loading="eager"
             />
@@ -216,35 +386,68 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           )}
         </div>
 
+        {/* Scrollable Thumbnails Strip Below */}
         {gallery.length > 1 && (
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-            {gallery.slice(0, 12).map((item, idx) => {
-              const isSelected = activeImage === item.url
-              return (
-                <div 
-                  key={idx} 
-                  onClick={() => handleThumbnailClick(item.url, item.type)}
-                  className={`aspect-square rounded border relative overflow-hidden cursor-pointer transition-all bg-[#F9F9F9] ${
-                    isSelected ? 'border-[#0A192F] ring-2 ring-[#0A192F]/20' : 'border-[#E5E5E5] hover:border-[#0A192F]'
-                  }`}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-[#666666] px-1">
+              <span>Scroll views ({gallery.length} photos)</span>
+              <span className="font-semibold text-[#0A192F]">{gallery[currentIndex]?.label || ''}</span>
+            </div>
+            <div className="relative flex items-center group/thumbs">
+              {gallery.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => scrollThumbnails('left')}
+                  className="absolute -left-3 z-10 w-7 h-7 rounded-full bg-white border border-[#E5E5E5] shadow-md flex items-center justify-center text-[#0A192F] hover:bg-[#0A192F] hover:text-white transition-all opacity-90 sm:opacity-0 sm:group-hover/thumbs:opacity-100 cursor-pointer"
+                  aria-label="Scroll thumbnails left"
                 >
-                  <Image 
-                    src={item.url} 
-                    alt={`${product.title} ${item.type} view ${idx + 1}`} 
-                    fill 
-                    sizes="(max-width: 1024px) 20vw, 10vw"
-                    className="object-contain"
-                  />
-                  {item.label && (
-                    <span className={`absolute bottom-0.5 right-0.5 text-[7px] px-1 rounded font-mono font-bold tracking-widest ${
-                      item.type === 'back' ? 'bg-[#0A192F] text-white' : 'bg-black/40 text-white'
-                    }`}>
-                      {item.label}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              )}
+              <div 
+                ref={thumbnailsRef}
+                className="flex gap-3 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x scrollbar-none w-full"
+              >
+                {gallery.map((item, idx) => {
+                  const isSelected = activeImage === item.url
+                  return (
+                    <div 
+                      key={idx} 
+                      ref={(el) => { thumbnailRefs.current[idx] = el }}
+                      onClick={() => handleThumbnailClick(item.url, item.type)}
+                      className={`shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-md border relative overflow-hidden cursor-pointer transition-all snap-center bg-[#F9F9F9] ${
+                        isSelected ? 'border-[#0A192F] ring-2 ring-[#0A192F]/20 scale-[1.02]' : 'border-[#E5E5E5] hover:border-[#0A192F]'
+                      }`}
+                    >
+                      <Image 
+                        src={item.url} 
+                        alt={`${product.title} ${item.type} view ${idx + 1}`} 
+                        fill 
+                        sizes="(max-width: 1024px) 20vw, 10vw"
+                        className="object-contain p-1"
+                      />
+                      {item.label && (
+                        <span className={`absolute bottom-0.5 right-0.5 text-[7px] px-1 rounded font-mono font-bold tracking-widest ${
+                          item.type === 'back' ? 'bg-[#0A192F] text-white' : 'bg-black/50 text-white'
+                        }`}>
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {gallery.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => scrollThumbnails('right')}
+                  className="absolute -right-3 z-10 w-7 h-7 rounded-full bg-white border border-[#E5E5E5] shadow-md flex items-center justify-center text-[#0A192F] hover:bg-[#0A192F] hover:text-white transition-all opacity-90 sm:opacity-0 sm:group-hover/thumbs:opacity-100 cursor-pointer"
+                  aria-label="Scroll thumbnails right"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -428,6 +631,151 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
         onOpenChange={setSizeGuideOpen}
         initialCategory={product.category === 'tees' ? 'tees' : 'hoodies'}
       />
+
+      {/* Fullscreen Interactive Clothing Gallery Lightbox */}
+      {isLightboxOpen && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between select-none animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product Image Gallery Lightbox"
+        >
+          {/* Lightbox Header Bar */}
+          <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/10 text-white z-30">
+            <div className="flex items-center gap-3">
+              <span className="font-brand font-bold tracking-[0.15em] text-xs sm:text-sm uppercase text-white truncate max-w-[200px] sm:max-w-md">
+                {product.title}
+              </span>
+              <span className="hidden sm:inline text-white/30">•</span>
+              <span className="text-[11px] font-mono text-white/70 tracking-widest uppercase">
+                {currentIndex + 1} of {gallery.length} {gallery[currentIndex]?.label ? `(${gallery[currentIndex].label})` : ''}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors font-mono text-xs tracking-wider cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden sm:inline">CLOSE (ESC)</span>
+            </button>
+          </div>
+
+          {/* Lightbox Main Stage: Enlarged Clothing Image */}
+          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-4 sm:p-8">
+            {/* Prev Button */}
+            {gallery.length > 1 && (
+              <button
+                type="button"
+                onClick={goToPrevImage}
+                aria-label="Previous photo"
+                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all backdrop-blur-md cursor-pointer shadow-xl"
+              >
+                <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+
+            {/* Enlarged Photo Container */}
+            <div 
+              className="relative w-full h-full max-w-4xl flex items-center justify-center"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {activeImage && (
+                <Image
+                  src={activeImage}
+                  alt={`${product.title} view ${currentIndex + 1}`}
+                  fill
+                  sizes="100vw"
+                  className="object-contain drop-shadow-2xl transition-all duration-300"
+                  priority
+                />
+              )}
+            </div>
+
+            {/* Next Button */}
+            {gallery.length > 1 && (
+              <button
+                type="button"
+                onClick={goToNextImage}
+                aria-label="Next photo"
+                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all backdrop-blur-md cursor-pointer shadow-xl"
+              >
+                <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Bottom Tray — Scroll Through Images Below */}
+          <div className="border-t border-white/10 bg-black/85 backdrop-blur-xl px-4 py-3 sm:py-4 z-30">
+            <div className="max-w-5xl mx-auto space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-white/70 uppercase px-1">
+                <span>SCROLL OR CLICK TO VIEW ALL {gallery.length} IMAGES</span>
+                <span className="text-white font-semibold">{gallery[currentIndex]?.label || 'GARMENT VIEW'}</span>
+              </div>
+
+              <div className="relative flex items-center">
+                {gallery.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => scrollLightboxThumbnails('left')}
+                    className="shrink-0 mr-2 p-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors cursor-pointer"
+                    aria-label="Scroll images left"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                )}
+
+                <div 
+                  ref={lightboxThumbnailsRef}
+                  className="flex gap-3 overflow-x-auto py-1 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent flex-1"
+                >
+                  {gallery.map((item, idx) => {
+                    const isSelected = activeImage === item.url
+                    return (
+                      <div
+                        key={idx}
+                        ref={(el) => { lightboxThumbnailRefs.current[idx] = el }}
+                        onClick={() => handleThumbnailClick(item.url, item.type)}
+                        className={`relative shrink-0 w-16 h-20 sm:w-20 sm:h-24 rounded cursor-pointer overflow-hidden border transition-all snap-center bg-black/40 ${
+                          isSelected 
+                            ? 'border-white ring-2 ring-white/70 scale-105 shadow-xl' 
+                            : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/60'
+                        }`}
+                      >
+                        <Image
+                          src={item.url}
+                          alt={`${product.title} thumbnail ${idx + 1}`}
+                          fill
+                          sizes="80px"
+                          className="object-contain p-1"
+                        />
+                        {item.label && (
+                          <span className="absolute bottom-0.5 inset-x-0 text-center text-[7px] font-mono uppercase bg-black/80 text-white font-bold tracking-tighter truncate px-0.5">
+                            {item.label}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {gallery.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => scrollLightboxThumbnails('right')}
+                    className="shrink-0 ml-2 p-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors cursor-pointer"
+                    aria-label="Scroll images right"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
