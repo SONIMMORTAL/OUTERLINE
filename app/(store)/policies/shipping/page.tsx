@@ -22,13 +22,13 @@ export default function ShippingPolicyPage() {
             Worldwide shipping via USPS, UPS, FedEx, and DHL.
           </p>
           <p>
-            Standard shipping takes <strong>3–7 business days</strong> unless otherwise stated in the product listing. Free standard shipping is automatically applied to all domestic orders over $150.
+            Standard shipping takes <strong>3–7 business days</strong> unless otherwise stated in the product listing. Free standard shipping is automatically applied to all domestic orders over $100.
           </p>
           <p>
             Shipping rates can be estimated in your cart or calculated at checkout.
           </p>
           <p>
-            Tracking information is automatically sent once an order ships. If you have questions about your delivery, reach out to <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a>.
+            Tracking information is automatically sent once an order ships. If you have questions about your delivery, reach out to <a href="mailto:Support@outerlineusa.com" className="font-mono hover:underline text-[#0A192F]">Support@outerlineusa.com</a>.
           </p>
           <p>
             Shipping addresses cannot be changed after an order is placed. Customers are responsible for entering a complete and accurate shipping address at checkout.

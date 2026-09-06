@@ -99,7 +99,7 @@ export default function CartDrawer() {
 
   const progress = freeShippingProgress()
   const currentTotal = totalPrice()
-  const amountToFreeShipping = Math.max(0, 150 - currentTotal)
+  const amountToFreeShipping = Math.max(0, 100 - currentTotal)
   const isFreeShipping = progress >= 100
 
   // Calculate estimated shipping & sales taxes
@@ -350,7 +350,7 @@ export default function CartDrawer() {
                   />
                 </div>
                 <div className="flex justify-between items-center text-[10px] text-[#666666]">
-                  <span>Free shipping on all orders over $150</span>
+                  <span>Free shipping on all orders over $100</span>
                   <span className="font-mono font-medium">{progress.toFixed(0)}%</span>
                 </div>
               </div>

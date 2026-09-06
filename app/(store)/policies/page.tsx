@@ -3,10 +3,12 @@ import { ChevronRight } from 'lucide-react'
 
 export default function PoliciesPage() {
   const policies = [
-    { name: 'Customer Service', href: '/policies/customer-service', description: 'Contact information and response times.' },
-    { name: 'Shipping', href: '/policies/shipping', description: 'Shipping rates, carriers, and timelines.' },
-    { name: 'Delivery', href: '/policies/delivery', description: 'Delivery procedures and responsibilities.' },
-    { name: 'Returns & Exchanges', href: '/policies/returns', description: 'Information on returns, exchanges, and sales terms.' },
+    { name: 'Terms of Use', href: '/terms', description: 'Terms of service, purchases, and intellectual property for Ensink Inc dba Outerline.' },
+    { name: 'Privacy Policy', href: '/privacy', description: 'Data collection, cookies, Stripe & PayPal processing, and customer privacy rights.' },
+    { name: 'Customer Service', href: '/policies/customer-service', description: '24–48 hour response time and official Support@outerlineusa.com communications.' },
+    { name: 'Shipping Policy', href: '/policies/shipping', description: 'Free shipping on orders over $100, carriers (USPS, UPS, FedEx, DHL), and 3–7 day delivery.' },
+    { name: 'Delivery Policy', href: '/policies/delivery', description: 'Carrier tracking scans, delivery confirmation, and international customs policies.' },
+    { name: 'Returns & Exchanges', href: '/policies/returns', description: 'All sales final. Defective or error items within 10 days of confirmed delivery.' },
   ]
 
   return (

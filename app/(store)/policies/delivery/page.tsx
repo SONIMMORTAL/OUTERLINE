@@ -28,7 +28,7 @@ export default function DeliveryPolicyPage() {
             A carrier scan marked "Delivered" constitutes confirmation of delivery to the address provided at checkout.
           </p>
           <p>
-            Claims for packages marked delivered must be filed directly with the carrier. If you require assistance with your carrier claim, contact <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a>.
+            Claims for packages marked delivered must be filed directly with the carrier. If you require assistance with your carrier claim, contact <a href="mailto:Support@outerlineusa.com" className="font-mono hover:underline text-[#0A192F]">Support@outerlineusa.com</a>.
           </p>
           <p>
             Orders returned due to incorrect or incomplete addresses are the buyer's responsibility, including reshipping costs.

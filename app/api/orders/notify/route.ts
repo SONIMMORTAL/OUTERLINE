@@ -3,6 +3,7 @@ import { sendInstantOrderSMS } from '@/lib/twilio'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { saveLocalOrder } from '@/lib/orders-store'
+import { incrementDiscountUse } from '@/lib/discounts-store'
 import { Resend } from 'resend'
 
 export async function POST(req: Request) {
@@ -13,9 +14,20 @@ export async function POST(req: Request) {
       customerEmail,
       shippingAddress,
       items = [],
+      subtotal = 0,
+      discountApplied = 0,
+      discountCode = null,
       totalAmount = 0,
       paymentMethod = 'PayPal'
     } = payload
+
+    if (discountCode) {
+      try {
+        incrementDiscountUse(discountCode)
+      } catch (e) {
+        console.error('Error incrementing discount usage:', e)
+      }
+    }
 
     const city = shippingAddress?.city || 'NYC'
     const state = shippingAddress?.state || 'NY'
@@ -75,7 +87,8 @@ export async function POST(req: Request) {
       customer_email: customerEmail,
       customer_phone: shippingAddress?.phone || '',
       total_amount: Number(totalAmount) || 0,
-      subtotal: Number(totalAmount) || 0,
+      subtotal: Number(subtotal) || Number(totalAmount) || 0,
+      discount_applied: Number(discountApplied) || 0,
       payment_method: paymentMethod,
       shipping_address: shippingAddress,
       order_items: items,
@@ -91,7 +104,9 @@ export async function POST(req: Request) {
         await (supabase.from('orders') as any).insert({
           customer_email: customerEmail,
           total_amount: Number(totalAmount) || 0,
-          subtotal: Number(totalAmount) || 0,
+          subtotal: Number(subtotal) || Number(totalAmount) || 0,
+          discount_applied: Number(discountApplied) || 0,
+          discount_code: discountCode || null,
           status: 'paid',
           shipping_address: shippingAddress,
           vendor_notified: true,

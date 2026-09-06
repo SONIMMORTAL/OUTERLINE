@@ -25,7 +25,7 @@ export default function ReturnsPolicyPage() {
             Returns or exchanges are accepted only for defective items or items shipped in error.
           </p>
           <p>
-            Requests must be submitted to <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F]">Support@outerline.com</a> within 7 days of confirmed delivery. Our customer service team reviews all inquiries within 48–72 hours.
+            Requests must be submitted to <a href="mailto:Support@outerlineusa.com" className="font-mono hover:underline text-[#0A192F]">Support@outerlineusa.com</a> within 10 days of confirmed delivery. Our customer service team reviews all inquiries within 24–48 hours.
           </p>
           <p>
             Approved items must be unworn, unwashed, and returned in original condition and packaging.

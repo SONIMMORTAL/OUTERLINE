@@ -10,77 +10,47 @@ export default function DiscountModal() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle')
   const [discountCode, setDiscountCode] = useState('')
+  const [showFloatingBadge, setShowFloatingBadge] = useState(false)
 
   useEffect(() => {
-    // 1. Never show if already seen in current browser session
     if (typeof window === 'undefined') return
-    const seenThisSession = sessionStorage.getItem('outerline-discount-seen')
-    if (seenThisSession) return
 
-    // 2. Check 14-day dismissal cooldown in localStorage
-    const dismissedAt = localStorage.getItem('outerline-discount-dismissed')
-    if (dismissedAt) {
-      const parsedTime = parseInt(dismissedAt, 10)
-      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
-      // If valid timestamp and within 14 days, suppress popup
-      if (!isNaN(parsedTime) && Date.now() - parsedTime < fourteenDaysMs) {
-        return
-      }
-      // If legacy boolean "true", also respect dismissal
-      if (dismissedAt === 'true') {
-        return
-      }
-    }
-
-    let hasTriggered = false
-    const triggerModal = () => {
-      if (hasTriggered) return
-      hasTriggered = true
-      sessionStorage.setItem('outerline-discount-seen', 'true')
-      setIsOpen(true)
-    }
-
-    // 3. Gentle delay: trigger after 20 seconds of thoughtful browsing
+    // Quick trigger: pops up after 3.5 seconds
     const timer = setTimeout(() => {
-      triggerModal()
-    }, 20000)
-
-    // 4. Intent trigger: user scrolls at least 45% down the page
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight
-      if (docHeight > 0 && scrollY / docHeight > 0.45) {
-        triggerModal()
+      const alreadyClaimed = localStorage.getItem('outerline-discount-claimed')
+      if (!alreadyClaimed) {
+        setIsOpen(true)
+      } else {
+        setShowFloatingBadge(true)
       }
-    }
+    }, 3500)
 
-    // 5. Restrained exit intent: only activates after 12s on page
-    let exitIntentArmed = false
-    const armExitIntent = setTimeout(() => {
-      exitIntentArmed = true
-    }, 12000)
-
+    // Also trigger on exit intent (mouse moving towards top of page)
     const handleMouseLeave = (e: MouseEvent) => {
-      if (exitIntentArmed && e.clientY <= 0) {
-        triggerModal()
+      if (e.clientY <= 5) {
+        const alreadyClaimed = localStorage.getItem('outerline-discount-claimed')
+        if (!alreadyClaimed) {
+          setIsOpen(true)
+        }
       }
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
     document.addEventListener('mouseleave', handleMouseLeave)
 
     return () => {
       clearTimeout(timer)
-      clearTimeout(armExitIntent)
-      window.removeEventListener('scroll', handleScroll)
       document.removeEventListener('mouseleave', handleMouseLeave)
     }
   }, [])
 
   const handleDismiss = () => {
     setIsOpen(false)
-    sessionStorage.setItem('outerline-discount-seen', 'true')
-    localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
+    setShowFloatingBadge(true)
+  }
+
+  const handleOpenManual = () => {
+    setIsOpen(true)
+    setShowFloatingBadge(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,24 +65,36 @@ export default function DiscountModal() {
         body: JSON.stringify({ email })
       })
       const data = await res.json()
-      const code = data.code || 'OUTER15'
+      const code = data.code || 'THANK YOU'
       setDiscountCode(code)
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         navigator.clipboard.writeText(code).catch(() => {})
       }
       setStatus('success')
-      sessionStorage.setItem('outerline-discount-seen', 'true')
-      localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
+      localStorage.setItem('outerline-discount-claimed', 'true')
     } catch {
-      setDiscountCode('OUTER15')
+      setDiscountCode('THANK YOU')
       setStatus('success')
-      sessionStorage.setItem('outerline-discount-seen', 'true')
-      localStorage.setItem('outerline-discount-dismissed', Date.now().toString())
+      localStorage.setItem('outerline-discount-claimed', 'true')
     }
   }
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={handleDismiss}>
+    <>
+      {/* Floating launcher badge when dismissed */}
+      {showFloatingBadge && !isOpen && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={handleOpenManual}
+          className="fixed bottom-6 right-6 z-40 bg-[#0A192F] text-white px-3.5 py-2 rounded-full shadow-2xl border border-white/20 font-mono text-[11px] uppercase tracking-wider hover:bg-black hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+          <span>Get 15% Off</span>
+        </motion.button>
+      )}
+
+      <Dialog.Root open={isOpen} onOpenChange={handleDismiss}>
       <AnimatePresence>
         {isOpen && (
           <Dialog.Portal forceMount>
@@ -196,6 +178,7 @@ export default function DiscountModal() {
           </Dialog.Portal>
         )}
       </AnimatePresence>
-    </Dialog.Root>
+      </Dialog.Root>
+    </>
   )
 }

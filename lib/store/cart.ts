@@ -91,7 +91,7 @@ export const useCartStore = create<CartStore>()(
       },
       
       freeShippingProgress: () => {
-        const threshold = 150
+        const threshold = 100
         const total = get().totalPrice()
         if (total >= threshold) return 100
         return (total / threshold) * 100

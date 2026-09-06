@@ -1,6 +1,9 @@
+import React from 'react';
 import { NextResponse } from 'next/server';
-import { subscribeToList, generateDiscountCode } from '@/lib/mailchimp';
-import { createClient } from '@/lib/supabase/server';
+import { subscribeToList } from '@/lib/mailchimp';
+import { Resend } from 'resend';
+import CustomerWelcome from '@/components/emails/CustomerWelcome';
+import { validateDiscount } from '@/lib/discounts-store';
 
 export async function POST(req: Request) {
   try {
@@ -10,27 +13,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    await subscribeToList(email, ['first-drop-subscriber'], firstName);
+    const trimmedEmail = email.trim();
 
-    const discountCode = generateDiscountCode();
+    // 1. Subscribe to Mailchimp list (graceful if credentials missing or rate limited)
     try {
-      const supabase = await createClient();
-      await supabase
-        .from('discounts')
-        .insert({
-          code: discountCode,
-          percentage: 15,
-          max_uses: 1,
-          uses_count: 0,
-          is_active: true,
-        } as any);
-    } catch (err) {
-      console.warn('Discounts table pending schema migration, returning generated code directly');
+      await subscribeToList(trimmedEmail, ['first-drop-subscriber'], firstName);
+    } catch (mcErr) {
+      console.warn('Mailchimp subscribe non-fatal error:', mcErr);
     }
 
-    return NextResponse.json({ code: discountCode });
+    // 2. Official Promo Code for subscribers
+    const promoCode = 'THANK YOU';
+    // Ensure discount exists and is active
+    validateDiscount(promoCode);
+
+    // 3. Dispatch Branded Welcome Email to the subscriber via Resend
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
+      try {
+        const resend = new Resend(resendApiKey);
+        const sender = process.env.RESEND_FROM_EMAIL || 'Outerline NYC <onboarding@resend.dev>';
+        
+        await resend.emails.send({
+          from: sender,
+          to: trimmedEmail,
+          subject: '⚡ Welcome to Outerline NYC — Your 15% OFF Promo Code',
+          react: React.createElement(CustomerWelcome, {
+            email: trimmedEmail,
+            firstName,
+            discountCode: promoCode,
+          }),
+        });
+      } catch (emailErr: any) {
+        console.error('Welcome email dispatch error via Resend:', emailErr?.message || emailErr);
+      }
+    } else {
+      console.log(`[DEV/STAGING] Welcome email for ${trimmedEmail} prepared with code ${promoCode}. (Resend API key is pending or test key)`);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      code: promoCode,
+      message: 'Welcome to the collective! Your 15% off discount code is ready.'
+    });
   } catch (error: any) {
-    console.error('Subscribe error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Subscribe handler error:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+

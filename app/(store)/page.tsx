@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import ProductCard from '@/components/store/ProductCard'
 import { AnimatedSection } from '@/components/store/AnimatedSection'
 import { HeroSection } from '@/components/store/HeroSection'
+import { DropCountdown } from '@/components/store/DropCountdown'
 
 import { mockProducts, collections } from '@/lib/mock-data'
 
@@ -17,6 +18,9 @@ export default async function HomePage() {
     <div className="flex flex-col w-full">
       {/* 1. Hero Section */}
       <HeroSection />
+
+      {/* Drop Countdown Section */}
+      <DropCountdown />
 
       {/* 2. Shop By Collection */}
       <section className="bg-[#FFFFFF] py-24 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
@@ -87,88 +91,49 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. Community & Testimonial Preview */}
+      {/* 5. Community & Fits Portal */}
       <section className="bg-[#FFFFFF] py-20 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
         <div className="max-w-7xl mx-auto space-y-12">
           <AnimatedSection className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#E5E5E5] pb-4">
             <div className="space-y-2">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#0A192F] font-mono font-semibold">
-                COMMUNITY & STREET REVIEWS
+                NYC COMMUNITY &amp; STREET STYLE
               </span>
-              <h2 className="font-serif text-3xl md:text-4xl text-[#0A192F] uppercase">TESTIMONIALS & FITS</h2>
-              <p className="text-[#666666]">Real feedback, customer videos, and NYC street style.</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-[#0A192F] uppercase">COMMUNITY FITS</h2>
+              <p className="text-[#666666]">Real street style, unboxing videos, and verified apparel reviews.</p>
             </div>
             <Link 
               href="/testimonials"
               className="text-[#0A192F] text-[10px] uppercase tracking-widest font-medium hover:text-[#000000] transition-colors pb-1 border-b border-[#0A192F] w-fit"
             >
-              VIEW ALL & SHARE YOUR FIT &rarr;
+              SHARE YOUR FIT &amp; REVIEW &rarr;
             </Link>
           </AnimatedSection>
 
           <AnimatedSection delay={0.2}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1 */}
-              <div className="p-6 rounded-xl border border-[#E5E5E5] bg-[#F9F9F9] flex flex-col justify-between space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-amber-500 text-xs">
-                    {'★'.repeat(5)}
-                  </div>
-                  <p className="font-serif italic text-[#0A192F] text-sm leading-relaxed">
-                    &ldquo;The Been Brooklyn Hoodie weight is insane. True heavyweight fleece, premium eyelets, and fits clean with cargos. Best streetwear pickup of the year.&rdquo;
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/60 text-xs">
-                  <div>
-                    <span className="font-semibold text-[#0A192F] block">Marcus T.</span>
-                    <span className="text-[10px] text-[#888888]">Brooklyn, NY • Verified Buyer</span>
-                  </div>
-                  <span className="text-[10px] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E5E5E5] text-[#0A192F] font-medium">
-                    Been Brooklyn Hoodie
-                  </span>
-                </div>
-              </div>
-
-              {/* Card 2 */}
-              <div className="p-6 rounded-xl border border-[#E5E5E5] bg-[#F9F9F9] flex flex-col justify-between space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-amber-500 text-xs">
-                    {'★'.repeat(5)}
-                  </div>
-                  <p className="font-serif italic text-[#0A192F] text-sm leading-relaxed">
-                    &ldquo;Customer support answered all my sizing questions within a couple hours. Fast 4-day shipping to Queens and the print quality on the Baller Tee is top tier.&rdquo;
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/60 text-xs">
-                  <div>
-                    <span className="font-semibold text-[#0A192F] block">Aaliyah K.</span>
-                    <span className="text-[10px] text-[#888888]">Queens, NY • Verified Buyer</span>
-                  </div>
-                  <span className="text-[10px] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E5E5E5] text-[#0A192F] font-medium">
-                    Baller Tee
-                  </span>
-                </div>
-              </div>
-
-              {/* Card 3 */}
-              <div className="p-6 rounded-xl border border-[#E5E5E5] bg-[#F9F9F9] flex flex-col justify-between space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-amber-500 text-xs">
-                    {'★'.repeat(5)}
-                  </div>
-                  <p className="font-serif italic text-[#0A192F] text-sm leading-relaxed">
-                    &ldquo;You can feel the five boroughs pride in every piece. The fabric is heavy, durable, and gets compliments whenever I am out in SoHo.&rdquo;
-                  </p>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-[#E5E5E5]/60 text-xs">
-                  <div>
-                    <span className="font-semibold text-[#0A192F] block">Devon R.</span>
-                    <span className="text-[10px] text-[#888888]">Manhattan, NYC • Verified Buyer</span>
-                  </div>
-                  <span className="text-[10px] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E5E5E5] text-[#0A192F] font-medium">
-                    So New York Hoodie
-                  </span>
-                </div>
+            <div className="rounded-2xl border border-[#E5E5E5] bg-[#F9F9F9] p-8 sm:p-12 text-center space-y-6 max-w-3xl mx-auto">
+              <span className="text-[10px] uppercase tracking-[0.3em] font-mono font-semibold text-[#0A192F]">
+                FIVE BOROUGHS STREETWEAR COLLECTIVE
+              </span>
+              <h3 className="font-serif text-2xl sm:text-3xl text-[#0A192F]">
+                WEAR THE PRIDE. SUBMIT YOUR FIT.
+              </h3>
+              <p className="text-xs sm:text-sm text-[#666666] leading-relaxed max-w-xl mx-auto">
+                Got an Outerline hoodie or tee? Tag us on Instagram <span className="font-mono font-semibold text-[#0A192F]">@outerline_usa</span> or upload your video reel and photo to be featured across our official channels.
+              </p>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  href="/testimonials"
+                  className="px-8 py-3.5 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-[0.2em] uppercase text-xs hover:bg-[#000000] transition-colors"
+                >
+                  UPLOAD YOUR FIT PHOTO
+                </Link>
+                <Link
+                  href="/collections/all"
+                  className="px-8 py-3.5 border border-[#0A192F] text-[#0A192F] font-serif tracking-[0.2em] uppercase text-xs hover:bg-[#0A192F] hover:text-white transition-colors"
+                >
+                  SHOP CURRENT CAPSULE
+                </Link>
               </div>
             </div>
           </AnimatedSection>
@@ -179,13 +144,13 @@ export default async function HomePage() {
       <section id="brand-story" className="bg-[#FFFFFF] py-24 md:py-32 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
         <AnimatedSection className="max-w-4xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A192F]/5 border border-[#0A192F]/10 text-[#0A192F] text-[10px] uppercase tracking-[0.25em] font-mono font-semibold">
-            ABOUT OUTER LINE
+            ABOUT OUTERLINE
           </div>
           <h2 className="font-serif text-3xl md:text-5xl text-[#0A192F] tracking-wide">
             THE DYNAMIC DUO
           </h2>
           <p className="text-[#333333] text-base md:text-lg leading-relaxed font-sans max-w-3xl mx-auto">
-            Outerline is founded by two individuals (aka: the dynamic duo) who's passionate about creativity and New York City. We embody the spirit, style, and pride of each of the five boroughs in our clothing with unique designs. We aim to bring innovative and a fresh look to New York streetwear. They say &ldquo; when New York sneezes the world catches a cold &rdquo; and we're looking to be an infectious brand. GOD BLESS YOU!!!
+            Founded by the Dynamic Duo, embodying the spirit, style, and pride of each of the five Boroughs in modern New York streetwear. Outerline is founded by two individuals (aka: the Dynamic Duo) who are passionate about creativity and New York City. We embody the spirit, style, and pride of each of the five Boroughs in our clothing with unique designs. We aim to bring an innovative and fresh look to New York streetwear. They say &ldquo;when New York sneezes the world catches a cold&rdquo; and we're looking to be an infectious brand. GOD BLESS YOU!!!
           </p>
           <div className="pt-4 flex items-center justify-center gap-4">
             <Link

@@ -10,7 +10,8 @@ import {
   Settings, 
   PlusCircle, 
   Globe,
-  Layers
+  Layers,
+  Tag
 } from 'lucide-react'
 
 import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
@@ -19,6 +20,7 @@ const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Merchandise', href: '/admin/products', icon: Package },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
+  { name: 'Coupons & Discounts', href: '/admin/discounts', icon: Tag },
   { name: 'Analytics & Traffic', href: '/admin/analytics', icon: BarChart3 },
   { name: 'Store Settings', href: '/admin/settings', icon: Settings },
 ]

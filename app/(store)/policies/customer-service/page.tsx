@@ -19,10 +19,10 @@ export default function CustomerServicePolicyPage() {
 
         <div className="space-y-6 text-[#333333] leading-relaxed">
           <p>
-            All orders are fulfilled directly with speed and precision. For all inquiries, reach out to our team at <a href="mailto:support@outerline.com" className="font-mono hover:underline text-[#0A192F] font-medium">Support@outerline.com</a>.
+            All orders are fulfilled directly with speed and precision. For all inquiries, reach out to our team at <a href="mailto:Support@outerlineusa.com" className="font-mono hover:underline text-[#0A192F] font-medium">Support@outerlineusa.com</a>.
           </p>
           <p>
-            Our customer service team responds within <strong>48–72 hours</strong>. Response times may be slightly longer during major drop launches and high-volume holiday periods.
+            Our customer service team responds within <strong>24–48 hours</strong>. Response times may be slightly longer during major drop launches and high-volume holiday periods.
           </p>
           <p>
             All inquiries are reviewed in the order received. Sending multiple messages regarding the same inquiry will not expedite a response.

@@ -19,11 +19,11 @@ export default function Footer() {
               Defined & Unconfined
             </p>
             <p className="text-[#666666] text-xs leading-relaxed max-w-xs mt-2">
-              Founded by the dynamic duo, embodying the spirit, style, and pride of each of the five boroughs in modern New York streetwear.
+              Founded by the Dynamic Duo, embodying the spirit, style, and pride of each of the five Boroughs in modern New York streetwear.
             </p>
             <div className="text-[11px] text-[#666666] pt-1 space-y-1">
-              <p>Support: <a href="mailto:support@outerline.com" className="font-mono text-[#0A192F] hover:underline">Support@outerline.com</a></p>
-              <p className="text-[10px] text-[#888888]">Customer service responds in 48–72 hours</p>
+              <p>Support: <a href="mailto:Support@outerlineusa.com" className="font-mono text-[#0A192F] hover:underline">Support@outerlineusa.com</a></p>
+              <p className="text-[10px] text-[#888888]">Customer service responds in 24–48 hours</p>
             </div>
           </div>
 
@@ -49,7 +49,9 @@ export default function Footer() {
             <div className="flex flex-col gap-3">
               {[
                 { label: 'About Us', href: '/about' },
-                { label: 'Testimonials', href: '/testimonials' },
+                { label: 'Contact Us', href: '/contact' },
+                { label: 'Order History', href: '/orders' },
+                { label: 'Community Reviews', href: '/testimonials' },
                 { label: 'Social Hub', href: '/social' },
                 { label: 'Size Guide', href: '/size-guide' }
               ].map((item) => (
@@ -69,9 +71,11 @@ export default function Footer() {
             <h4 className="text-[#0A192F] font-brand font-bold tracking-[0.15em] text-xs mb-2 uppercase">POLICIES</h4>
             <div className="flex flex-col gap-3">
               {[
+                { label: 'Terms of Use', href: '/terms' },
+                { label: 'Privacy Policy', href: '/privacy' },
                 { label: 'Customer Service', href: '/policies/customer-service' },
-                { label: 'Shipping', href: '/policies/shipping' },
-                { label: 'Delivery', href: '/policies/delivery' },
+                { label: 'Shipping Policy', href: '/policies/shipping' },
+                { label: 'Delivery Policy', href: '/policies/delivery' },
                 { label: 'Returns & Exchanges', href: '/policies/returns' }
               ].map((item) => (
                 <Link 
@@ -104,9 +108,9 @@ export default function Footer() {
                       body: JSON.stringify({ email: input.value })
                     })
                     input.value = ''
-                    toast.success('Subscribed! Welcome to the Outerline collective.')
+                    toast.success('Subscribed! Check your inbox for your 15% discount code.')
                   } catch {
-                    toast.success('Subscribed! Welcome to the Outerline collective.')
+                    toast.success('Subscribed! Check your inbox for your 15% discount code.')
                   }
                 }}
               >

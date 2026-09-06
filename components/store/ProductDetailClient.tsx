@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { ShoppingCart, Check, ChevronLeft, ChevronRight, Ruler, Maximize2, X } from 'lucide-react'
+import { ShoppingCart, Check, ChevronLeft, ChevronRight, Ruler } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { useCartStore } from '@/lib/store/cart'
 import { toast } from 'sonner'
@@ -64,12 +64,9 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const [activeImage, setActiveImage] = useState<string>(gallery[0]?.url || images[0] || '/placeholder.jpg')
   const [activeImageType, setActiveImageType] = useState<'model' | 'front' | 'back'>(gallery[0]?.type || 'front')
   const [sizeGuideOpen, setSizeGuideOpen] = useState<boolean>(false)
-  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false)
 
   const thumbnailsRef = useRef<HTMLDivElement>(null)
-  const lightboxThumbnailsRef = useRef<HTMLDivElement>(null)
   const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([])
-  const lightboxThumbnailRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
@@ -110,48 +107,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
         inline: 'center'
       })
     }
-    if (isLightboxOpen && lightboxThumbnailRefs.current[currentIndex]) {
-      lightboxThumbnailRefs.current[currentIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
-  }, [currentIndex, isLightboxOpen])
-
-  // Keyboard navigation and body scroll lock for Lightbox
-  useEffect(() => {
-    if (!isLightboxOpen) {
-      document.body.style.overflow = ''
-      return
-    }
-
-    document.body.style.overflow = 'hidden'
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsLightboxOpen(false)
-      } else if (e.key === 'ArrowRight') {
-        if (gallery.length <= 1) return
-        const nextIdx = (currentIndex + 1) % gallery.length
-        const nextItem = gallery[nextIdx]
-        setActiveImage(nextItem.url)
-        setActiveImageType(nextItem.type)
-      } else if (e.key === 'ArrowLeft') {
-        if (gallery.length <= 1) return
-        const prevIdx = (currentIndex - 1 + gallery.length) % gallery.length
-        const prevItem = gallery[prevIdx]
-        setActiveImage(prevItem.url)
-        setActiveImageType(prevItem.type)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isLightboxOpen, currentIndex, gallery])
+  }, [currentIndex])
 
   // Touch swipe support
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -180,13 +136,6 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     if (thumbnailsRef.current) {
       const scrollAmount = direction === 'left' ? -220 : 220
       thumbnailsRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
-    }
-  }
-
-  const scrollLightboxThumbnails = (direction: 'left' | 'right') => {
-    if (lightboxThumbnailsRef.current) {
-      const scrollAmount = direction === 'left' ? -220 : 220
-      lightboxThumbnailsRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
     }
   }
 
@@ -287,12 +236,10 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
       {/* Left Column: Live Interactive Gallery — 4:5 Standard */}
       <div className="flex flex-col space-y-4">
         <div 
-          className="aspect-[4/5] rounded-lg border border-[#E5E5E5] relative overflow-hidden bg-[#F9F9F9] transition-all duration-300 group cursor-zoom-in"
-          onClick={() => setIsLightboxOpen(true)}
+          className="aspect-[4/5] rounded-lg border border-[#E5E5E5] relative overflow-hidden bg-[#F9F9F9] transition-all duration-300 group"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          title="Click to expand full screen gallery"
         >
           {/* Quick Front / Back Toggle Pill */}
           {currentBack && (
@@ -365,11 +312,12 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             </>
           )}
 
-          {/* Click To Enlarge Indicator Badge */}
-          <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-[#E5E5E5] text-[10px] font-mono tracking-wider text-[#0A192F] shadow-xs pointer-events-none">
-            <Maximize2 className="w-3 h-3 text-[#0A192F]" />
-            <span>EXPAND • {currentIndex + 1} / {gallery.length}</span>
-          </div>
+          {/* Photo Count Indicator */}
+          {gallery.length > 1 && (
+            <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-[#E5E5E5] text-[10px] font-mono tracking-wider text-[#0A192F] shadow-xs pointer-events-none">
+              <span>{currentIndex + 1} / {gallery.length}</span>
+            </div>
+          )}
 
           {activeImage ? (
             <Image 
@@ -630,151 +578,6 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
         onOpenChange={setSizeGuideOpen}
         initialCategory={product.category === 'tees' ? 'tees' : 'hoodies'}
       />
-
-      {/* Fullscreen Interactive Clothing Gallery Lightbox */}
-      {isLightboxOpen && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between select-none animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Product Image Gallery Lightbox"
-        >
-          {/* Lightbox Header Bar */}
-          <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/10 text-white z-30">
-            <div className="flex items-center gap-3">
-              <span className="font-brand font-bold tracking-[0.15em] text-xs sm:text-sm uppercase text-white truncate max-w-[200px] sm:max-w-md">
-                {product.title}
-              </span>
-              <span className="hidden sm:inline text-white/30">•</span>
-              <span className="text-[11px] font-mono text-white/70 tracking-widest uppercase">
-                {currentIndex + 1} of {gallery.length} {gallery[currentIndex]?.label ? `(${gallery[currentIndex].label})` : ''}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsLightboxOpen(false)}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors font-mono text-xs tracking-wider cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-              <span className="hidden sm:inline">CLOSE (ESC)</span>
-            </button>
-          </div>
-
-          {/* Lightbox Main Stage: Enlarged Clothing Image */}
-          <div className="relative flex-1 w-full min-h-0 flex items-center justify-center p-4 sm:p-8">
-            {/* Prev Button */}
-            {gallery.length > 1 && (
-              <button
-                type="button"
-                onClick={goToPrevImage}
-                aria-label="Previous photo"
-                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all backdrop-blur-md cursor-pointer shadow-xl"
-              >
-                <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
-              </button>
-            )}
-
-            {/* Enlarged Photo Container */}
-            <div 
-              className="relative w-full h-full max-w-4xl flex items-center justify-center"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-            >
-              {activeImage && (
-                <Image
-                  src={activeImage}
-                  alt={`${product.title} view ${currentIndex + 1}`}
-                  fill
-                  sizes="100vw"
-                  className="object-contain drop-shadow-2xl transition-all duration-300"
-                  priority
-                />
-              )}
-            </div>
-
-            {/* Next Button */}
-            {gallery.length > 1 && (
-              <button
-                type="button"
-                onClick={goToNextImage}
-                aria-label="Next photo"
-                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-white/15 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all backdrop-blur-md cursor-pointer shadow-xl"
-              >
-                <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
-              </button>
-            )}
-          </div>
-
-          {/* Lightbox Bottom Tray — Scroll Through Images Below */}
-          <div className="border-t border-white/10 bg-black/85 backdrop-blur-xl px-4 py-3 sm:py-4 z-30">
-            <div className="max-w-5xl mx-auto space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono tracking-widest text-white/70 uppercase px-1">
-                <span>SCROLL OR CLICK TO VIEW ALL {gallery.length} IMAGES</span>
-                <span className="text-white font-semibold">{gallery[currentIndex]?.label || 'GARMENT VIEW'}</span>
-              </div>
-
-              <div className="relative flex items-center">
-                {gallery.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => scrollLightboxThumbnails('left')}
-                    className="shrink-0 mr-2 p-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors cursor-pointer"
-                    aria-label="Scroll images left"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                )}
-
-                <div 
-                  ref={lightboxThumbnailsRef}
-                  className="flex gap-3 overflow-x-auto py-1 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent flex-1"
-                >
-                  {gallery.map((item, idx) => {
-                    const isSelected = activeImage === item.url
-                    return (
-                      <div
-                        key={idx}
-                        ref={(el) => { lightboxThumbnailRefs.current[idx] = el }}
-                        onClick={() => handleThumbnailClick(item.url, item.type)}
-                        className={`relative shrink-0 w-16 h-20 sm:w-20 sm:h-24 rounded cursor-pointer overflow-hidden border transition-all snap-center bg-black/40 ${
-                          isSelected 
-                            ? 'border-white ring-2 ring-white/70 scale-105 shadow-xl' 
-                            : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/60'
-                        }`}
-                      >
-                        <Image
-                          src={item.url}
-                          alt={`${product.title} thumbnail ${idx + 1}`}
-                          fill
-                          sizes="80px"
-                          className="object-contain p-1"
-                        />
-                        {item.label && (
-                          <span className="absolute bottom-0.5 inset-x-0 text-center text-[7px] font-mono uppercase bg-black/80 text-white font-bold tracking-tighter truncate px-0.5">
-                            {item.label}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {gallery.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => scrollLightboxThumbnails('right')}
-                    className="shrink-0 ml-2 p-2 rounded-full bg-white/10 hover:bg-white text-white hover:text-black transition-colors cursor-pointer"
-                    aria-label="Scroll images right"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -3,15 +3,16 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion'
-import { ShoppingCart, Menu, X } from 'lucide-react'
+import { ShoppingCart, Menu, X, PackageCheck } from 'lucide-react'
 import { useCartStore } from '@/lib/store/cart'
+import { TopAnnouncementBar } from '@/components/store/TopAnnouncementBar'
 
 const NAV_LINKS = [
   { name: 'SHOP ALL', href: '/collections/all' },
   { name: 'BEEN BROOKLYN', href: '/collections/been-brooklyn' },
   { name: 'SO NEW YORK', href: '/collections/so-new-york' },
-  { name: 'TESTIMONIALS', href: '/testimonials' },
-  { name: 'SOCIAL', href: '/social' },
+  { name: 'ORDER HISTORY', href: '/orders' },
+  { name: 'CONTACT', href: '/contact' },
 ]
 
 export default function Navbar() {
@@ -50,13 +51,18 @@ export default function Navbar() {
         initial="visible"
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        className="fixed top-0 inset-x-0 z-50 transition-all duration-300 flex flex-col"
+      >
+        {/* 10Deep-Style Black Announcement Top Bar */}
+        <TopAnnouncementBar />
+
+        {/* Main Navbar Header */}
+        <div className={`w-full transition-all duration-300 ${
           isScrolled 
             ? 'bg-[#FFFFFF]/95 backdrop-blur-xl border-b border-[#E5E5E5] shadow-xs' 
             : 'bg-[#FFFFFF]/85 backdrop-blur-md border-b border-[#E5E5E5]/60'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
           
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
@@ -122,7 +128,8 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-      </motion.nav>
+      </div>
+    </motion.nav>
 
       {/* Mobile Menu Overlay */}
       <AnimatePresence>

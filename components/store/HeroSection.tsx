@@ -52,9 +52,17 @@ export function HeroSection() {
           sizes="100vw"
         />
 
-        {/* Continuous smooth luxury gradient with zero vertical split lines */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent pointer-events-none" />
+        {/* Illuminated night-lights ambiance & glow (Brighter NYC night look) */}
+        {/* Soft atmospheric gradient allowing lights to shine through */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+        
+        {/* Luminous streetlights & neon sign radiant highlights */}
+        <div className="absolute -top-24 left-1/4 w-96 h-96 bg-amber-400/20 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
+        <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-cyan-400/15 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-orange-500/15 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
+        
+        {/* Subtle luminous vignette for copy contrast without crushing image brightness */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* Editorial Copy Block — Lower-Left Corner */}

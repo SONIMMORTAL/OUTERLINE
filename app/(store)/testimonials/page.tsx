@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { 
@@ -36,95 +36,21 @@ interface Testimonial {
   date: string
 }
 
-const INITIAL_TESTIMONIALS: Testimonial[] = [
-  {
-    id: 't-1',
-    name: 'Marcus Thorne',
-    handle: '@marcust_nyc',
-    location: 'Bushwick, Brooklyn',
-    borough: 'Brooklyn',
-    rating: 5,
-    product: 'Been Brooklyn Hoodie',
-    productSlug: 'been-brooklyn-hoodie',
-    comment: 'The 10oz heavyweight fleece is completely unmatched. You can feel the quality the moment you put it on. Structured hood, heavy cuffs, and keeps the winter wind out. Five boroughs pride on lock.',
-    type: 'photo',
-    mediaUrl: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
-    date: 'August 28, 2026'
-  },
-  {
-    id: 't-2',
-    name: 'Jaylen Carter',
-    handle: '@jaylenc_bx',
-    location: 'Concourse, Bronx',
-    borough: 'Bronx',
-    rating: 5,
-    product: 'Been Brooklyn Baller Tee',
-    productSlug: 'been-brooklyn-baller-tee',
-    comment: 'Check out the drape on this Baller Tee! Heavyweight cotton face that holds shape all day. Support answered my sizing questions right away, and shipping landed in 4 days.',
-    type: 'video',
-    mediaUrl: '/BEEN BROOKLYN BALLER BLK&BLUE .png',
-    date: 'August 24, 2026'
-  },
-  {
-    id: 't-3',
-    name: 'Aaliyah Rivera',
-    handle: '@aaliyah.st',
-    location: 'Astoria, Queens',
-    borough: 'Queens',
-    rating: 5,
-    product: 'So New York Hoodie',
-    productSlug: 'so-new-york-emoji-hoodie',
-    comment: 'The neon pink detailing against the pitch black fabric is pure NYC energy. Wore this to a rooftop pop-up and had three people stop and ask what brand this was.',
-    type: 'photo',
-    mediaUrl: '/SONY WHITE & PINKMODEL.png',
-    date: 'August 19, 2026'
-  },
-  {
-    id: 't-4',
-    name: 'Damon Vance',
-    handle: '@damon_vance',
-    location: 'Lower East Side, Manhattan',
-    borough: 'Manhattan',
-    rating: 5,
-    product: 'Been Brooklyn Hoodie',
-    productSlug: 'been-brooklyn-hoodie',
-    comment: 'Outerline really captured what authentic NYC streetwear is supposed to feel like. Heavy, bold, without cheap shortcuts. God bless the dynamic duo for doing this right.',
-    type: 'video',
-    mediaUrl: '/BEEN BROOKLYN BLACK SWEATER model.png',
-    date: 'August 15, 2026'
-  },
-  {
-    id: 't-5',
-    name: 'Malik Jenkins',
-    handle: '@m_jenkinsnyc',
-    location: 'Flatbush, Brooklyn',
-    borough: 'Brooklyn',
-    rating: 5,
-    product: 'So New York Emoji Tee',
-    productSlug: 'so-new-york-emoji-tee',
-    comment: 'Print quality doesn’t fade or crack after washing. Super clean neckline and fits true to size. Delivery took only 3 business days to Brooklyn.',
-    type: 'photo',
-    mediaUrl: '/outer-line-models-uniform-1200x1500/exec-9ed0ddf7-4e23-4985-b5c2-e9b1518a1620-4x5.png',
-    date: 'August 10, 2026'
-  },
-  {
-    id: 't-6',
-    name: 'Chris Morales',
-    handle: '@morales_si',
-    location: 'St. George, Staten Island',
-    borough: 'Staten Island',
-    rating: 5,
-    product: 'Been Brooklyn Baller Tee',
-    productSlug: 'been-brooklyn-baller-tee',
-    comment: 'Hard to find tees that fit broad shoulders properly without looking baggy at the waist. Outerline nailed the silhouette. 10/10.',
-    type: 'photo',
-    mediaUrl: '/outer-line-models-uniform-1200x1500/exec-cd173aa2-7bc1-4aae-a326-d893b50d8c92-4x5.png',
-    date: 'August 03, 2026'
-  }
-]
+const INITIAL_TESTIMONIALS: Testimonial[] = []
 
 export default function TestimonialsPage() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(INITIAL_TESTIMONIALS)
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('outerline_user_testimonials')
+        if (saved) {
+          setTestimonials(JSON.parse(saved))
+        }
+      } catch (e) {}
+    }
+  }, [])
   const [activeFilter, setActiveFilter] = useState<string>('all')
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null)
@@ -186,7 +112,13 @@ export default function TestimonialsPage() {
         date: 'Just now'
       }
 
-      setTestimonials([newTestimonial, ...testimonials])
+      const updated = [newTestimonial, ...testimonials]
+      setTestimonials(updated)
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('outerline_user_testimonials', JSON.stringify(updated))
+        } catch (e) {}
+      }
       setIsSubmitting(false)
       setIsUploadModalOpen(false)
 
@@ -271,8 +203,27 @@ export default function TestimonialsPage() {
           ))}
         </div>
 
-        {/* Testimonials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Testimonials Grid or Clean Real Empty State */}
+        {filteredTestimonials.length === 0 ? (
+          <div className="rounded-2xl border border-[#E5E5E5] bg-[#F9F9F9] p-12 text-center space-y-6 max-w-2xl mx-auto my-8">
+            <div className="w-16 h-16 rounded-full bg-[#0A192F]/5 flex items-center justify-center mx-auto text-[#0A192F]">
+              <Camera className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="font-serif text-2xl font-bold text-[#0A192F]">BE THE FIRST TO SHARE YOUR FIT</h3>
+              <p className="text-xs sm:text-sm text-[#666666] leading-relaxed max-w-md mx-auto">
+                No false reviews here. Upload your real video reel or fit photo wearing Outerline apparel to be featured on our official community showcase.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="px-8 py-3.5 bg-[#0A192F] text-white rounded font-serif tracking-[0.2em] uppercase text-xs hover:bg-black transition-colors shadow-sm cursor-pointer"
+            >
+              Submit Your Review &amp; Photo
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence>
             {filteredTestimonials.map((item) => (
               <motion.div
@@ -374,6 +325,7 @@ export default function TestimonialsPage() {
             ))}
           </AnimatePresence>
         </div>
+      )}
 
       </div>
 

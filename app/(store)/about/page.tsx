@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { ChevronRight, MapPin } from 'lucide-react'
 
 export const metadata = {
   title: 'About Us | Outerline NYC',
-  description: 'The story behind Outerline NYC, founded by the dynamic duo embodying the pride of New York City and the five boroughs.',
+  description: 'The story behind Outerline NYC, founded by the Dynamic Duo embodying the pride of New York City and the five Boroughs.',
 }
 
 export default function AboutPage() {
@@ -31,17 +30,17 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center border-b border-[#E5E5E5] pb-16">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A192F]/5 border border-[#0A192F]/10 text-[#0A192F] text-[10px] uppercase tracking-[0.25em] font-mono font-semibold">
-              BRAND STORY & ETHOS
+              BRAND STORY &amp; ETHOS
             </div>
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#0A192F] leading-tight">
               DEFINED &amp; UNCONFINED
             </h1>
             
-            {/* Exact User Bio */}
+            {/* Exact User Bio Capitalized */}
             <div className="p-6 md:p-8 rounded-2xl bg-[#F9F9F9] border border-[#E5E5E5] relative shadow-sm">
               <span className="text-4xl text-[#0A192F]/20 font-serif absolute top-3 left-4 leading-none">&ldquo;</span>
               <p className="font-serif text-lg md:text-xl text-[#0A192F] leading-relaxed relative z-10 pt-2 pb-2">
-                Outerline is founded by two individuals (aka: the dynamic duo) who's passionate about creativity and New York City. We embody the spirit, style, and pride of each of the five boroughs in our clothing with unique designs. We aim to bring innovative and a fresh look to New York streetwear. They say &ldquo; when New York sneezes the world catches a cold &rdquo; and we're looking to be an infectious brand.
+                Founded by the Dynamic Duo, embodying the spirit, style, and pride of each of the five Boroughs in modern New York streetwear. Outerline is founded by two individuals (aka: the Dynamic Duo) who's passionate about creativity and New York City. We embody the spirit, style, and pride of each of the five Boroughs in our clothing with unique designs. We aim to bring innovative and a fresh look to New York streetwear. They say &ldquo; when New York sneezes the world catches a cold &rdquo; and we're looking to be an infectious brand.
               </p>
               <p className="font-mono font-bold tracking-widest text-[#0A192F] text-base mt-3">
                 GOD BLESS YOU!!!
@@ -59,24 +58,80 @@ export default function AboutPage() {
                 href="/testimonials"
                 className="px-8 py-3.5 border border-[#0A192F] text-[#0A192F] font-serif tracking-[0.2em] uppercase text-xs hover:bg-[#0A192F] hover:text-white transition-colors"
               >
-                COMMUNITY TESTIMONIALS
+                COMMUNITY REVIEWS
               </Link>
             </div>
           </div>
 
           <div className="lg:col-span-5">
-            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-[#F3F3F3] border border-[#E5E5E5]">
-              <Image
-                src="/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png"
-                alt="Outerline NYC - The Dynamic Duo Model Shoot"
-                fill
-                className="object-cover"
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
-                <span className="text-[10px] font-mono tracking-widest uppercase text-white/80">BROOKLYN STUDIO</span>
-                <p className="font-serif text-lg">Heavyweight Fleece &amp; Borough Identity</p>
+            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl bg-[#0A192F] border border-[#1E293B] p-8 flex flex-col justify-between text-white">
+              {/* Subtle background ambient gradients */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-400/10 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-cyan-400/10 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+              {/* Top card header */}
+              <div className="relative z-10 space-y-3 border-b border-white/10 pb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-white/60">
+                    EST. NYC 2026
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-mono uppercase tracking-wider text-white/80">
+                    ARCHIVAL EDITION
+                  </span>
+                </div>
+                <h3 className="font-serif text-2xl font-bold tracking-tight text-white">
+                  OUTERLINE NYC
+                </h3>
+                <p className="text-xs font-mono tracking-widest text-amber-400 uppercase">
+                  DEFINED &amp; UNCONFINED
+                </p>
+              </div>
+
+              {/* Center Insignia */}
+              <div className="relative z-10 py-6 space-y-4">
+                <div className="border border-white/15 rounded-xl p-5 bg-white/[0.03] backdrop-blur-sm space-y-3">
+                  <span className="text-[9px] font-mono uppercase tracking-[0.25em] text-white/50 block">
+                    THE FIVE BOROUGHS OF NEW YORK
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-mono text-white/90">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      BROOKLYN
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      MANHATTAN
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      QUEENS
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      THE BRONX
+                    </div>
+                    <div className="flex items-center gap-1.5 col-span-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      STATEN ISLAND
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-white/70 leading-relaxed font-sans">
+                  Embodying the authentic grit, cultural influence, and creative spirit of New York City in heavyweight, statement streetwear.
+                </p>
+              </div>
+
+              {/* Card Footer */}
+              <div className="relative z-10 border-t border-white/10 pt-4 flex items-center justify-between text-[11px] font-mono text-white/60">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                  <span>40.7128° N, 74.0060° W</span>
+                </div>
+                <span className="text-white/80 font-serif tracking-widest uppercase text-[10px]">
+                  THE DYNAMIC DUO
+                </span>
               </div>
             </div>
           </div>

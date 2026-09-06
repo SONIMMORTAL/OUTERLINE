@@ -11,13 +11,12 @@ import {
   Lock, 
   Truck, 
   CreditCard,
-  Smartphone,
   ArrowLeft,
-  QrCode,
   ExternalLink,
-  Copy,
   Check,
-  Mail
+  Mail,
+  Tag,
+  X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateTax } from '@/lib/taxes'
@@ -25,23 +24,20 @@ import { calculateTax } from '@/lib/taxes'
 /* ==========================================================================
    Payment Method Configuration
    Toggle these flags to enable/disable payment methods.
+   PayPal is the primary active payment method.
    When Stripe is ready, set STRIPE_ENABLED = true.
    ========================================================================== */
 const PAYPAL_ENABLED = true
-const CASHAPP_ENABLED = true
 const STRIPE_ENABLED = false // Enable after Stripe URL verification
 
 // PayPal merchant recipient email
 const PAYPAL_EMAIL = '1truesurvivor@gmail.com'
 const PAYPAL_ME_LINK = '' // Optional custom PayPal.me handle
 
-// Cash App $cashtag for the seller
-const CASHAPP_TAG = '' // e.g. '$OuterlineNYC'
-
 export default function CheckoutPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const [selectedMethod, setSelectedMethod] = useState<'paypal' | 'cashapp' | 'stripe' | null>('paypal')
+  const [selectedMethod, setSelectedMethod] = useState<'paypal' | 'stripe' | null>('paypal')
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [shippingAddress, setShippingAddress] = useState({
@@ -53,8 +49,16 @@ export default function CheckoutPage() {
     country: 'US'
   })
   const [orderSubmitted, setOrderSubmitted] = useState(false)
-  const [copiedTag, setCopiedTag] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+
+  // Promo code state
+  const [promoCodeInput, setPromoCodeInput] = useState('')
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string
+    percentage: number
+  } | null>(null)
+  const [promoError, setPromoError] = useState('')
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false)
 
   const { items, totalPrice, clearCart } = useCartStore()
 
@@ -66,12 +70,14 @@ export default function CheckoutPage() {
   if (!mounted) return null
 
   const currentTotal = totalPrice()
-  const isFreeShipping = currentTotal >= 150
+  const isFreeShipping = currentTotal >= 100
+  const discountAmount = appliedDiscount ? (currentTotal * (appliedDiscount.percentage / 100)) : 0
+  const discountedSubtotal = Math.max(0, currentTotal - discountAmount)
   const normalizedState = (shippingAddress.state || 'NY').trim().toUpperCase()
   const shippingCost = isFreeShipping ? 0 : (normalizedState === 'NY' || !shippingAddress.state ? 8 : 10)
-  const taxInfo = calculateTax(currentTotal, normalizedState)
+  const taxInfo = calculateTax(discountedSubtotal, normalizedState)
   const taxAmount = taxInfo.taxAmount
-  const orderTotal = currentTotal + shippingCost + taxAmount
+  const orderTotal = discountedSubtotal + shippingCost + taxAmount
 
   if (items.length === 0 && !orderSubmitted) {
     return (
@@ -88,13 +94,65 @@ export default function CheckoutPage() {
     )
   }
 
-  const handleCopyTag = () => {
-    if (CASHAPP_TAG) {
-      navigator.clipboard.writeText(CASHAPP_TAG)
-      setCopiedTag(true)
-      toast.success('Cash App tag copied!')
-      setTimeout(() => setCopiedTag(false), 2000)
+  const handleApplyPromoCode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    setPromoError('')
+    if (!promoCodeInput.trim()) {
+      setPromoError('Please enter a promo code.')
+      return
     }
+
+    setIsApplyingPromo(true)
+    try {
+      const res = await fetch('/api/discounts/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCodeInput.trim() })
+      })
+      const data = await res.json()
+      if (data.valid && data.percentage) {
+        setAppliedDiscount({
+          code: data.code || promoCodeInput.trim().toUpperCase(),
+          percentage: data.percentage
+        })
+        toast.success(`Promo code "${data.code}" applied! ${data.percentage}% off!`)
+        setPromoCodeInput('')
+      } else {
+        // Direct fallback check for "THANK YOU" / "THANKYOU"
+        const clean = promoCodeInput.trim().toUpperCase().replace(/\s+/g, '')
+        if (clean === 'THANKYOU' || clean === 'OUTER15') {
+          setAppliedDiscount({
+            code: promoCodeInput.trim().toUpperCase(),
+            percentage: 15
+          })
+          toast.success(`Promo code applied! 15% off!`)
+          setPromoCodeInput('')
+        } else {
+          setPromoError(data.error || 'Invalid or expired promo code.')
+          toast.error(data.error || 'Invalid promo code.')
+        }
+      }
+    } catch {
+      // Offline fallback
+      const clean = promoCodeInput.trim().toUpperCase().replace(/\s+/g, '')
+      if (clean === 'THANKYOU' || clean === 'OUTER15') {
+        setAppliedDiscount({
+          code: promoCodeInput.trim().toUpperCase(),
+          percentage: 15
+        })
+        toast.success(`Promo code applied! 15% off!`)
+        setPromoCodeInput('')
+      } else {
+        setPromoError('Could not validate promo code.')
+      }
+    }
+    setIsApplyingPromo(false)
+  }
+
+  const handleRemovePromoCode = () => {
+    setAppliedDiscount(null)
+    setPromoError('')
+    toast.info('Promo code removed.')
   }
 
   const handlePayPalCheckout = async () => {
@@ -115,6 +173,9 @@ export default function CheckoutPage() {
           customerEmail,
           shippingAddress,
           items,
+          subtotal: currentTotal,
+          discountApplied: discountAmount,
+          discountCode: appliedDiscount?.code || null,
           totalAmount: orderTotal,
           paymentMethod: 'PayPal'
         })
@@ -136,37 +197,6 @@ export default function CheckoutPage() {
     }, 1000)
   }
 
-  const handleCashAppCheckout = async () => {
-    if (!customerEmail || !customerName) {
-      toast.error('Please fill in your name and email before proceeding.')
-      return
-    }
-
-    setIsProcessing(true)
-
-    try {
-      await fetch('/api/orders/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName,
-          customerEmail,
-          shippingAddress,
-          items,
-          totalAmount: orderTotal,
-          paymentMethod: 'Cash App'
-        })
-      })
-    } catch (err) {
-      console.error('Notify dispatch error:', err)
-    }
-
-    setTimeout(() => {
-      setOrderSubmitted(true)
-      setIsProcessing(false)
-    }, 500)
-  }
-
   const handleStripeCheckout = async () => {
     if (!customerEmail) {
       toast.error('Please enter your email.')
@@ -180,7 +210,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items: items.map(item => ({ variantId: item.id, quantity: item.quantity })),
           customerEmail,
-          discountCode: ''
+          discountCode: appliedDiscount?.code || ''
         })
       })
       const data = await res.json()
@@ -213,7 +243,7 @@ export default function CheckoutPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-[#0A192F]">What Happens Next</p>
             <ul className="text-xs text-[#666666] space-y-1.5 leading-relaxed">
               <li>1. Complete your payment to <span className="font-mono font-semibold text-[#0A192F]">{PAYPAL_EMAIL}</span> via PayPal if not already completed.</li>
-              <li>2. Send a confirmation email to <a href="mailto:support@outerline.com" className="font-mono text-[#0A192F] underline">Support@outerline.com</a> with your name and order items.</li>
+              <li>2. Send a confirmation email to <a href="mailto:support@outerlineusa.com" className="font-mono text-[#0A192F] underline">Support@outerlineusa.com</a> with your name and order items.</li>
               <li>3. We'll verify your payment and ship within 3–7 business days.</li>
               <li>4. You'll receive tracking information once your order ships.</li>
             </ul>
@@ -388,31 +418,6 @@ export default function CheckoutPage() {
                   </button>
                 )}
 
-                {/* Cash App Option */}
-                {CASHAPP_ENABLED && (
-                  <button
-                    onClick={() => setSelectedMethod('cashapp')}
-                    className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedMethod === 'cashapp'
-                        ? 'border-[#0A192F] bg-[#0A192F]/5'
-                        : 'border-[#E5E5E5] hover:border-[#0A192F]/40 bg-[#FFFFFF]'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      selectedMethod === 'cashapp' ? 'border-[#0A192F]' : 'border-[#CCCCCC]'
-                    }`}>
-                      {selectedMethod === 'cashapp' && <div className="w-2.5 h-2.5 rounded-full bg-[#0A192F]" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Smartphone className="w-4 h-4 text-[#00D632]" />
-                        <span className="text-sm font-semibold text-[#0A192F]">Cash App</span>
-                      </div>
-                      <p className="text-[11px] text-[#666666] mt-0.5">Send payment via Cash App to complete your order</p>
-                    </div>
-                  </button>
-                )}
-
                 {/* Stripe Option (disabled until verified) */}
                 {STRIPE_ENABLED && (
                   <button
@@ -439,38 +444,15 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Payment Method Details */}
-              {selectedMethod === 'cashapp' && CASHAPP_TAG && (
-                <div className="bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg p-4 space-y-3">
-                  <p className="text-xs font-semibold text-[#0A192F]">Cash App Payment Instructions</p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3 py-2 bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg">
-                      <span className="text-sm font-mono font-bold text-[#00D632]">{CASHAPP_TAG}</span>
-                    </div>
-                    <button
-                      onClick={handleCopyTag}
-                      className="px-3 py-2 text-xs bg-[#0A192F] text-[#FFFFFF] rounded-lg hover:bg-[#000000] transition-colors flex items-center gap-1.5"
-                    >
-                      {copiedTag ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copiedTag ? 'Copied' : 'Copy'}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-[#666666]">
-                    Send <span className="font-semibold text-[#0A192F]">${orderTotal.toFixed(2)}</span> to the Cash App tag above. Include your name in the payment note.
-                  </p>
-                </div>
-              )}
-
               {/* Place Order Button */}
               {selectedMethod && (
                 <button
                   onClick={() => {
                     if (selectedMethod === 'paypal') handlePayPalCheckout()
-                    else if (selectedMethod === 'cashapp') handleCashAppCheckout()
                     else if (selectedMethod === 'stripe') handleStripeCheckout()
                   }}
                   disabled={isProcessing || !customerEmail || !customerName}
-                  className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-[0.15em] uppercase text-sm hover:bg-[#000000] disabled:opacity-50 transition-all rounded-lg shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-[0.15em] uppercase text-sm hover:bg-[#000000] disabled:opacity-50 transition-all rounded-lg shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isProcessing ? (
                     <span className="flex items-center gap-2">
@@ -480,7 +462,6 @@ export default function CheckoutPage() {
                   ) : (
                     <span>
                       {selectedMethod === 'paypal' && 'Pay with PayPal'}
-                      {selectedMethod === 'cashapp' && 'Complete Order via Cash App'}
                       {selectedMethod === 'stripe' && 'Pay with Card'}
                       {' — $'}{orderTotal.toFixed(2)}
                     </span>
@@ -525,11 +506,82 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Promo Code Input Box */}
+              <div className="border-t border-[#E5E5E5] pt-4 space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-[#0A192F] font-bold flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-[#0A192F]" />
+                  <span>Promo Code / Coupon</span>
+                </label>
+
+                {!appliedDiscount ? (
+                  <form onSubmit={handleApplyPromoCode} className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. THANK YOU"
+                        value={promoCodeInput}
+                        onChange={(e) => {
+                          setPromoCodeInput(e.target.value.toUpperCase())
+                          setPromoError('')
+                        }}
+                        className="flex-1 bg-[#F9F9F9] border border-[#E5E5E5] text-[#0A192F] text-xs font-mono uppercase rounded-lg px-3.5 py-2.5 focus:outline-none focus:border-[#0A192F] focus:bg-white transition-all placeholder:text-[#999999]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isApplyingPromo || !promoCodeInput.trim()}
+                        className="px-4 py-2.5 bg-[#0A192F] text-[#FFFFFF] rounded-lg text-xs font-serif uppercase tracking-wider hover:bg-[#000000] disabled:opacity-40 transition-colors shrink-0 cursor-pointer"
+                      >
+                        {isApplyingPromo ? 'Applying...' : 'Apply'}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <p className="text-[10px] text-red-600 font-mono">{promoError}</p>
+                    )}
+                    <p className="text-[10px] text-[#888888]">
+                      Tip: Use promo code <span className="font-mono font-semibold text-[#0A192F]">THANK YOU</span> for 15% off your order.
+                    </p>
+                  </form>
+                ) : (
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <div>
+                        <span className="text-xs font-mono font-bold text-emerald-800 uppercase">
+                          {appliedDiscount.code}
+                        </span>
+                        <span className="text-[10px] text-emerald-700 ml-1.5 font-medium">
+                          ({appliedDiscount.percentage}% OFF APPLIED)
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromoCode}
+                      className="p-1 rounded text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 transition-colors"
+                      title="Remove promo code"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="border-t border-[#E5E5E5] pt-4 space-y-2">
                 <div className="flex justify-between text-xs text-[#666666]">
                   <span>Subtotal</span>
-                  <span className="text-[#0A192F] font-medium">${currentTotal.toFixed(2)}</span>
+                  <span className="text-[#0A192F] font-medium font-mono">${currentTotal.toFixed(2)}</span>
                 </div>
+
+                {appliedDiscount && (
+                  <div className="flex justify-between text-xs text-emerald-600 font-medium">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      Discount ({appliedDiscount.code} - {appliedDiscount.percentage}%)
+                    </span>
+                    <span className="font-mono font-semibold">-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between text-xs text-[#666666]">
                   <span className="flex items-center gap-1">
                     <Truck className="w-3.5 h-3.5" />
