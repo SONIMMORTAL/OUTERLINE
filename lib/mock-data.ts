@@ -41,6 +41,12 @@ export const collections: Collection[] = [
     "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png"
   },
   {
+    "name": "Baller Merch",
+    "slug": "baller",
+    "description": "The official Brooklyn Baller collection. Heavyweight collegiate athletic stripes and animated mascot graphics.",
+    "image": "/BEEN BROOKLYN BALLER BLK&BLUE .png"
+  },
+  {
     "name": "So New York",
     "slug": "so-new-york",
     "description": "The definitive New York essential collection. Designed for the kinetic energy of SoHo and the five boroughs.",
@@ -185,8 +191,8 @@ export const mockProducts: Product[] = [
     "price": 55,
     "compare_at_price": null,
     "category": "hoodies",
-    "collection": "Been Brooklyn",
-    "collection_slug": "been-brooklyn",
+    "collection": "Baller Merch",
+    "collection_slug": "baller",
     "description": "Heritage collegiate Baller stripes meet modern Brooklyn athletic streetwear tailoring.",
     "specs": [
       "10 oz./yd\u00b2 (US) 16.7 oz /L yd (CA), 70/30 ring-spun cotton/polyester blend 3-end fleece with 100% cotton face, 32 singles",
@@ -348,8 +354,8 @@ export const mockProducts: Product[] = [
     "price": 35,
     "compare_at_price": null,
     "category": "tees",
-    "collection": "Been Brooklyn",
-    "collection_slug": "been-brooklyn",
+    "collection": "Baller Merch",
+    "collection_slug": "baller",
     "description": "Iconic Been Brooklyn Baller typography on premium 4.3oz ringspun cotton.",
     "specs": [
       "4.3 oz./yd\u00b2 (US), 7.2 oz./L yd (CA), 100% combed ring-spun cotton, 32 singles",
@@ -1196,6 +1202,13 @@ export const mockProducts: Product[] = [
 ];
 
 export function getProductsByCollection(slug: string): Product[] {
+  const normalized = slug.toLowerCase();
+  if (normalized === 'baller' || normalized === 'baller-merch' || normalized === 'grey-baller') {
+    return mockProducts.filter((p) => p.collection_slug === 'baller' || p.slug.includes('baller'));
+  }
+  if (normalized === 'been-brooklyn') {
+    return mockProducts.filter((p) => p.collection_slug === 'been-brooklyn' || p.collection_slug === 'baller');
+  }
   return mockProducts.filter((p) => p.collection_slug === slug);
 }
 

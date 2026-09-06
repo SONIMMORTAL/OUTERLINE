@@ -16,12 +16,9 @@ export default function Footer() {
               <img src="/OUTERLINE LOGO.png" alt="Outerline Logo" className="h-10 object-contain w-auto" />
             </Link>
             <p className="font-serif italic text-[#666666] text-sm">
-              Defined & Unconfined
+              Defined &amp; Unconfined
             </p>
-            <p className="text-[#666666] text-xs leading-relaxed max-w-xs mt-2">
-              Founded by the Dynamic Duo, embodying the spirit, style, and pride of each of the five Boroughs in modern New York streetwear.
-            </p>
-            <div className="text-[11px] text-[#666666] pt-1 space-y-1">
+            <div className="text-[11px] text-[#666666] pt-2 space-y-1">
               <p>Support: <a href="mailto:Support@outerlineusa.com" className="font-mono text-[#0A192F] hover:underline">Support@outerlineusa.com</a></p>
               <p className="text-[10px] text-[#888888]">Customer service responds in 24–48 hours</p>
             </div>
@@ -31,15 +28,18 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="text-[#0A192F] font-brand font-bold tracking-[0.15em] text-xs mb-2 uppercase">SHOP</h4>
             <div className="flex flex-col gap-3">
-              {['Hoodies', 'Tees', 'Bottoms', 'Headwear', 'Accessories'].map((item) => (
-                <Link 
-                  key={item} 
-                  href={`/collections/${item.toLowerCase()}`}
-                  className="uppercase tracking-widest text-xs text-[#666666] hover:text-[#0A192F] transition-colors w-fit"
-                >
-                  {item}
-                </Link>
-              ))}
+              {['Hoodies', 'Tees', 'Baller Merch', 'Bottoms', 'Headwear', 'Accessories'].map((item) => {
+                const href = item === 'Baller Merch' ? '/collections/baller' : `/collections/${item.toLowerCase()}`
+                return (
+                  <Link 
+                    key={item} 
+                    href={href}
+                    className="uppercase tracking-widest text-xs text-[#666666] hover:text-[#0A192F] transition-colors w-fit"
+                  >
+                    {item}
+                  </Link>
+                )
+              })}
             </div>
           </div>
 

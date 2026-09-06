@@ -5,12 +5,14 @@ import ProductCard from '@/components/store/ProductCard'
 import { AnimatedSection } from '@/components/store/AnimatedSection'
 import { HeroSection } from '@/components/store/HeroSection'
 import { DropCountdown } from '@/components/store/DropCountdown'
+import { BallerMerchSection } from '@/components/store/BallerMerchSection'
 
 import { mockProducts, collections } from '@/lib/mock-data'
 
 export default async function HomePage() {
   const collectionCards = [
     { name: 'Been Brooklyn', slug: 'been-brooklyn', image: '/BEEN BROOKLYN BLACK SWEATER model.png', subtitle: 'Heavyweight Fleece & Borough Pride' },
+    { name: 'Baller Merch', slug: 'baller', image: '/BEEN BROOKLYN BALLER BLK&BLUE .png', subtitle: 'Collegiate Stripes & Animated Mascot' },
     { name: 'So New York', slug: 'so-new-york', image: '/SONY WHITE & PINKMODEL.png', subtitle: 'Kinetic NYC Streetwear Essential' },
   ]
 
@@ -33,9 +35,9 @@ export default async function HomePage() {
           </AnimatedSection>
 
           <AnimatedSection delay={0.2}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {collectionCards.map((card) => (
-                <Link key={card.slug} href={`/collections/${card.slug}`} className="group block relative aspect-[4/5] sm:aspect-[16/10] md:aspect-[4/5] overflow-hidden bg-[#F3F3F3] rounded-xl border border-[#E5E5E5]">
+                <Link key={card.slug} href={`/collections/${card.slug}`} className="group block relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] rounded-xl border border-[#E5E5E5]">
                   <img 
                     src={card.image} 
                     alt={card.name} 
@@ -44,7 +46,7 @@ export default async function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent group-hover:from-black/70 transition-colors duration-500" />
                   <div className="absolute inset-0 p-8 flex flex-col justify-end text-white space-y-2">
                     <span className="text-[10px] uppercase tracking-[0.25em] text-white/80 font-mono font-medium">{card.subtitle}</span>
-                    <h3 className="font-brand text-3xl md:text-4xl font-bold text-white tracking-[0.1em] uppercase group-hover:translate-x-1 transition-transform duration-300">
+                    <h3 className="font-brand text-2xl sm:text-3xl font-bold text-white tracking-[0.1em] uppercase group-hover:translate-x-1 transition-transform duration-300">
                       {card.name}
                     </h3>
                   </div>
@@ -54,6 +56,9 @@ export default async function HomePage() {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* 3. Dedicated Baller Merch Feature Spotlight */}
+      <BallerMerchSection />
 
       {/* 4. Products Grouped By Collection */}
       <section className="bg-[#F9F9F9] py-24 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
