@@ -119,33 +119,33 @@ export const mockProducts: Product[] = [
         "inventory_quantity": 15
       },
       {
-        "id": "1-black-navy-s",
+        "id": "1-black-blue-s",
         "size": "S",
-        "color": "Black/Navy",
+        "color": "Black/Blue",
         "image": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
         "image_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
         "inventory_quantity": 15
       },
       {
-        "id": "1-black-navy-m",
+        "id": "1-black-blue-m",
         "size": "M",
-        "color": "Black/Navy",
+        "color": "Black/Blue",
         "image": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
         "image_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
         "inventory_quantity": 15
       },
       {
-        "id": "1-black-navy-l",
+        "id": "1-black-blue-l",
         "size": "L",
-        "color": "Black/Navy",
+        "color": "Black/Blue",
         "image": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
         "image_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
         "inventory_quantity": 15
       },
       {
-        "id": "1-black-navy-xl",
+        "id": "1-black-blue-xl",
         "size": "XL",
-        "color": "Black/Navy",
+        "color": "Black/Blue",
         "image": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
         "image_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
         "inventory_quantity": 15

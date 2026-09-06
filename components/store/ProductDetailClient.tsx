@@ -201,8 +201,8 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
       wht: '#FFFFFF',
       pink: '#F472B6',
       red: '#DC2626',
-      blue: '#1E3A8A',
-      navy: '#0A192F',
+      blue: '#2563EB',
+      navy: '#2563EB',
       grey: '#9CA3AF',
       gray: '#9CA3AF'
     }
