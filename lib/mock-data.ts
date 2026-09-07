@@ -176,13 +176,13 @@ export const mockProducts: Product[] = [
       "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
       "/been-brooklyn-baller-hoodie-blk-blue-render-front.jpg",
       "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
-      "/been-brooklyn-baller-hoodie-blk-red-render-front.png"
+      "/been-brooklyn-baller-hoodie-blk-red-render-front.jpg"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
       "/been-brooklyn-baller-hoodie-blk-blue-render-back.jpg",
       "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
-      "/been-brooklyn-baller-hoodie-blk-red-render-back.png"
+      "/been-brooklyn-baller-hoodie-blk-red-render-back.jpg"
     ],
     "images_by_color": {
       "Black/Blue": {
@@ -194,8 +194,8 @@ export const mockProducts: Product[] = [
       "Black/Red": {
         "model_front": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
         "model_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
-        "render_front": "/been-brooklyn-baller-hoodie-blk-red-render-front.png",
-        "render_back": "/been-brooklyn-baller-hoodie-blk-red-render-back.png"
+        "render_front": "/been-brooklyn-baller-hoodie-blk-red-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-hoodie-blk-red-render-back.jpg"
       }
     },
     "product_variants": [
