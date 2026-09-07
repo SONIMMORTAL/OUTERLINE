@@ -10,7 +10,6 @@ import { TopAnnouncementBar } from '@/components/store/TopAnnouncementBar'
 const NAV_LINKS = [
   { name: 'SHOP ALL', href: '/collections/all' },
   { name: 'BEEN BROOKLYN', href: '/collections/been-brooklyn' },
-  { name: 'BALLER MERCH', href: '/collections/baller' },
   { name: 'SO NEW YORK', href: '/collections/so-new-york' },
   { name: 'ORDER HISTORY', href: '/orders' },
   { name: 'CONTACT', href: '/contact' },

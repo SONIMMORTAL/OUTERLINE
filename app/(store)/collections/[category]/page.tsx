@@ -6,8 +6,8 @@ import { mockProducts, collections, getProductsByCollection } from '@/lib/mock-d
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
-  const formattedTitle = category === 'baller' || category === 'baller-merch' || category === 'grey-baller'
-    ? 'Baller Merch'
+  const formattedTitle = category === 'been-brooklyn-baller' || category === 'baller' || category === 'baller-merch' || category === 'grey-baller'
+    ? 'Been Brooklyn Baller'
     : category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   return {
     title: `${formattedTitle} | OUTERLINE`,
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
 
 const VALID_CATEGORIES = [
   'hoodies', 'tees', 'all',
-  'so-new-york', 'been-brooklyn', 'baller', 'baller-merch', 'grey-baller',
+  'so-new-york', 'been-brooklyn', 'been-brooklyn-baller', 'baller', 'baller-merch', 'grey-baller',
   'bottoms', 'headwear', 'accessories'
 ]
 
@@ -58,8 +58,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
 
   const categoryName = slug === 'all' 
     ? 'All Collections' 
-    : (slug === 'baller' || slug === 'baller-merch' || slug === 'grey-baller' 
-        ? 'Baller Merch' 
+    : (slug === 'been-brooklyn-baller' || slug === 'baller' || slug === 'baller-merch' || slug === 'grey-baller' 
+        ? 'Been Brooklyn Baller' 
         : slug.split('-').join(' '))
 
   const groupedProducts = slug === 'all' && collections ? collections.map(c => ({

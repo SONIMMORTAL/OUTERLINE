@@ -5,14 +5,13 @@ import ProductCard from '@/components/store/ProductCard'
 import { AnimatedSection } from '@/components/store/AnimatedSection'
 import { HeroSection } from '@/components/store/HeroSection'
 import { DropCountdown } from '@/components/store/DropCountdown'
-import { BallerMerchSection } from '@/components/store/BallerMerchSection'
 
 import { mockProducts, collections } from '@/lib/mock-data'
 
 export default async function HomePage() {
   const collectionCards = [
     { name: 'Been Brooklyn', slug: 'been-brooklyn', image: '/BEEN BROOKLYN BLACK SWEATER model.png', subtitle: 'Heavyweight Fleece & Borough Pride' },
-    { name: 'Baller Merch', slug: 'baller', image: '/BEEN BROOKLYN BALLER BLK&BLUE .png', subtitle: 'Collegiate Stripes & Animated Mascot' },
+    { name: 'Been Brooklyn Baller', slug: 'been-brooklyn-baller', image: '/BEEN BROOKLYN BALLER BLK&BLUE .png', subtitle: 'Collegiate Stripes & Animated Mascot' },
     { name: 'So New York', slug: 'so-new-york', image: '/SONY WHITE & PINKMODEL.png', subtitle: 'Kinetic NYC Streetwear Essential' },
   ]
 
@@ -56,9 +55,6 @@ export default async function HomePage() {
           </AnimatedSection>
         </div>
       </section>
-
-      {/* 3. Dedicated Baller Merch Feature Spotlight */}
-      <BallerMerchSection />
 
       {/* 4. Products Grouped By Collection */}
       <section className="bg-[#F9F9F9] py-24 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">

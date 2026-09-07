@@ -28,8 +28,8 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="text-[#0A192F] font-brand font-bold tracking-[0.15em] text-xs mb-2 uppercase">SHOP</h4>
             <div className="flex flex-col gap-3">
-              {['Hoodies', 'Tees', 'Baller Merch', 'Bottoms', 'Headwear', 'Accessories'].map((item) => {
-                const href = item === 'Baller Merch' ? '/collections/baller' : `/collections/${item.toLowerCase()}`
+              {['Hoodies', 'Tees', 'Been Brooklyn Baller', 'Bottoms', 'Headwear', 'Accessories'].map((item) => {
+                const href = item === 'Been Brooklyn Baller' ? '/collections/been-brooklyn-baller' : `/collections/${item.toLowerCase()}`
                 return (
                   <Link 
                     key={item} 
