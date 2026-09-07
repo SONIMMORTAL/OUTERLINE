@@ -76,15 +76,31 @@ export const mockProducts: Product[] = [
       "Nickel eyelets"
     ],
     "editorial_story": "forged out of the raw energy of brooklyn. Made of heavyweight cotton with an iconic nyc style",
-    "model_image": null,
+    "model_image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
     "images": [
+      "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_brookyn_blk n wh_blk_hoodie.jpg"
     ],
     "images_back": [
+      "/been-brooklyn-blk-hood-blk-text-model-new.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg"
     ],
+    "images_by_color": {
+      "Black/Blue": {
+        "model_front": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "model_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
+        "render_front": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
+        "render_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg"
+      },
+      "Black/White": {
+        "model_front": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+        "model_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
+        "render_front": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_brookyn_blk n wh_blk_hoodie.jpg",
+        "render_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg"
+      }
+    },
     "product_variants": [
       {
         "id": "1-black-blue-s",
@@ -288,48 +304,48 @@ export const mockProducts: Product[] = [
     "model_image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
     "images": [
       "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
-      "/been-brooklyn-baller-tee-blk-blue-render-front.png",
+      "/been-brooklyn-baller-tee-blk-blue-render-front.jpg",
       "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
-      "/been-brooklyn-baller-tee-blk-red-render-front.png",
+      "/been-brooklyn-baller-tee-blk-red-render-front.jpg",
       "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
-      "/been-brooklyn-baller-tee-white-blue-render-front.png",
+      "/been-brooklyn-baller-tee-white-blue-render-front.jpg",
       "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
-      "/been-brooklyn-baller-tee-white-red-render-front.png"
+      "/been-brooklyn-baller-tee-white-red-render-front.jpg"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
-      "/been-brooklyn-baller-tee-blk-blue-render-back.png",
+      "/been-brooklyn-baller-tee-blk-blue-render-back.jpg",
       "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
-      "/been-brooklyn-baller-tee-blk-red-render-back.png",
+      "/been-brooklyn-baller-tee-blk-red-render-back.jpg",
       "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
-      "/been-brooklyn-baller-tee-white-blue-render-back.png",
+      "/been-brooklyn-baller-tee-white-blue-render-back.jpg",
       "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
-      "/been-brooklyn-baller-tee-white-red-render-back.png"
+      "/been-brooklyn-baller-tee-white-red-render-back.jpg"
     ],
     "images_by_color": {
       "Black/Blue": {
         "model_front": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
         "model_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
-        "render_front": "/been-brooklyn-baller-tee-blk-blue-render-front.png",
-        "render_back": "/been-brooklyn-baller-tee-blk-blue-render-back.png"
+        "render_front": "/been-brooklyn-baller-tee-blk-blue-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-tee-blk-blue-render-back.jpg"
       },
       "Black/Red": {
         "model_front": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
         "model_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
-        "render_front": "/been-brooklyn-baller-tee-blk-red-render-front.png",
-        "render_back": "/been-brooklyn-baller-tee-blk-red-render-back.png"
+        "render_front": "/been-brooklyn-baller-tee-blk-red-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-tee-blk-red-render-back.jpg"
       },
       "White/Blue": {
         "model_front": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
         "model_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
-        "render_front": "/been-brooklyn-baller-tee-white-blue-render-front.png",
-        "render_back": "/been-brooklyn-baller-tee-white-blue-render-back.png"
+        "render_front": "/been-brooklyn-baller-tee-white-blue-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-tee-white-blue-render-back.jpg"
       },
       "White/Red": {
         "model_front": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
         "model_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
-        "render_front": "/been-brooklyn-baller-tee-white-red-render-front.png",
-        "render_back": "/been-brooklyn-baller-tee-white-red-render-back.png"
+        "render_front": "/been-brooklyn-baller-tee-white-red-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-tee-white-red-render-back.jpg"
       }
     },
     "product_variants": [
