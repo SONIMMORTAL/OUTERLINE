@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Mail, Clock, MapPin, Send, CheckCircle2 } from 'lucide-react'
+import { ChevronRight, Mail, Clock, Send, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ContactPage() {
@@ -82,17 +82,6 @@ export default function ContactPage() {
                 </div>
                 <p className="text-xs text-[#666666] leading-relaxed">
                   Our customer service team responds within <strong>24–48 hours</strong>. Response times may be slightly extended during major release drops and holiday periods.
-                </p>
-              </div>
-
-              <div className="space-y-2 border-t border-[#E5E5E5] pt-4">
-                <div className="flex items-center gap-2 text-xs font-mono font-semibold text-[#0A192F]">
-                  <MapPin className="w-4 h-4 text-[#0A192F]" />
-                  <span>HEADQUARTERS</span>
-                </div>
-                <p className="text-xs text-[#666666] leading-relaxed font-mono">
-                  Ensink Inc, dba Outerline<br />
-                  Brooklyn, New York
                 </p>
               </div>
             </div>
