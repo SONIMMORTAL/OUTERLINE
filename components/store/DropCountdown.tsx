@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Flame, Bell, Check, Clock } from 'lucide-react'
 import { toast } from 'sonner'
+import { CountdownConfig, DEFAULT_COUNTDOWN } from '@/lib/types/countdown'
 
 export function DropCountdown() {
-  // Target date: Next drop calculated to upcoming Friday 8 PM EST
+  const [config, setConfig] = useState<CountdownConfig>(DEFAULT_COUNTDOWN)
   const [timeLeft, setTimeLeft] = useState<{
     days: number
     hours: number
@@ -19,17 +20,32 @@ export function DropCountdown() {
   const [subscribed, setSubscribed] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Fetch admin configured drop message and target date
   useEffect(() => {
-    // Dynamic drop date: Calculate next Friday 8:00 PM
-    const now = new Date()
-    const target = new Date()
-    const dayOfWeek = now.getDay() // 0 = Sun, 5 = Fri
-    let daysUntilFriday = (5 - dayOfWeek + 7) % 7
-    if (daysUntilFriday === 0 && now.getHours() >= 20) {
-      daysUntilFriday = 7
+    fetch('/api/countdown')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.config) {
+          setConfig(data.config)
+        }
+      })
+      .catch(() => {
+        // Fallback to default
+      })
+  }, [])
+
+  useEffect(() => {
+    const target = config.targetDate ? new Date(config.targetDate) : new Date()
+    
+    // Fallback if targetDate was invalid or in past
+    if (!config.targetDate || isNaN(target.getTime())) {
+      const now = new Date()
+      const dayOfWeek = now.getDay()
+      let daysUntilFriday = (5 - dayOfWeek + 7) % 7
+      if (daysUntilFriday === 0 && now.getHours() >= 20) daysUntilFriday = 7
+      target.setDate(now.getDate() + daysUntilFriday)
+      target.setHours(20, 0, 0, 0)
     }
-    target.setDate(now.getDate() + daysUntilFriday)
-    target.setHours(20, 0, 0, 0)
 
     const updateTimer = () => {
       const difference = target.getTime() - Date.now()
@@ -49,7 +65,7 @@ export function DropCountdown() {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [config.targetDate])
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +87,10 @@ export function DropCountdown() {
     setLoading(false)
   }
 
+  if (config.is_active === false) {
+    return null
+  }
+
   return (
     <section className="bg-[#000000] text-white py-16 sm:py-20 px-4 sm:px-6 lg:px-8 border-y border-white/10 relative overflow-hidden">
       {/* Background glow ambiance */}
@@ -82,16 +102,16 @@ export function DropCountdown() {
         {/* Drop Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-mono tracking-[0.25em] uppercase">
           <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-          <span>NYC STREETWEAR DROP RADAR</span>
+          <span>{config.badge || 'NYC STREETWEAR DROP RADAR'}</span>
         </div>
 
-        {/* Heading */}
+        {/* Heading & Admin Message */}
         <div className="space-y-3 max-w-2xl">
           <h2 className="font-brand text-3xl sm:text-4xl md:text-5xl font-bold tracking-[0.1em] uppercase text-white">
-            NEXT CAPSULE DROP COUNTDOWN
+            {config.title || 'NEXT CAPSULE DROP COUNTDOWN'}
           </h2>
-          <p className="text-white/70 text-xs sm:text-sm font-sans tracking-wide">
-            Limited batch five boroughs heavyweight hoodies, vintage graphic tees &amp; headwear. Once sold out, they will not restock.
+          <p className="text-white/70 text-xs sm:text-sm font-sans tracking-wide leading-relaxed">
+            {config.message || 'Limited batch five boroughs heavyweight hoodies, vintage graphic tees & headwear. Once sold out, they will not restock.'}
           </p>
         </div>
 
@@ -128,7 +148,7 @@ export function DropCountdown() {
               <input
                 type="email"
                 required
-                placeholder="ENTER YOUR EMAIL FOR EARLY DROP ACCESS"
+                placeholder={config.placeholder_text || "ENTER YOUR EMAIL FOR EARLY DROP ACCESS"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex-1 bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-xs font-mono px-4 py-3 rounded-lg focus:outline-none focus:border-white focus:bg-white/15 transition-all uppercase tracking-wider"
@@ -139,7 +159,7 @@ export function DropCountdown() {
                 className="px-6 py-3 bg-white text-black font-brand text-xs uppercase tracking-widest font-bold rounded-lg hover:bg-white/90 transition-colors shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
               >
                 <Bell className="w-3.5 h-3.5" />
-                <span>{loading ? 'Subscribing...' : 'Notify Me'}</span>
+                <span>{loading ? 'Subscribing...' : (config.button_text || 'Notify Me')}</span>
               </button>
             </form>
           ) : (

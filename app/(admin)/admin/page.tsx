@@ -16,11 +16,13 @@ import {
   Eye,
   CheckCircle2,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Flame
 } from 'lucide-react'
 
 import { requireAdmin } from '@/lib/auth/admin'
 import { getLocalOrders } from '@/lib/orders-store'
+import { getLocalCountdown } from '@/lib/countdown-store'
 
 export default async function AdminDashboard() {
   await requireAdmin()
@@ -64,6 +66,8 @@ export default async function AdminDashboard() {
   const orderCount = validOrders.length
   const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0
 
+  const countdown = getLocalCountdown()
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Top Banner */}
@@ -94,6 +98,39 @@ export default async function AdminDashboard() {
             <span>Traffic & Geography</span>
           </Link>
         </div>
+      </div>
+
+      {/* Live Drop Countdown & Announcement Message Widget */}
+      <div className="rounded-xl border border-[#E5E5E5] bg-[#FFFFFF] p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-black text-amber-400 flex items-center justify-center shrink-0 shadow-md">
+            <Flame className="w-6 h-6 fill-amber-400" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#666666] font-semibold">
+                STOREFRONT DROP RADAR
+              </span>
+              <Badge variant={countdown.is_active ? "default" : "outline"} className={countdown.is_active ? "bg-emerald-600 text-white text-[9px]" : "text-[9px]"}>
+                {countdown.is_active ? "Active on Homepage" : "Paused"}
+              </Badge>
+            </div>
+            <h3 className="font-brand text-lg font-bold text-[#0A192F] uppercase tracking-wide">
+              {countdown.title}
+            </h3>
+            <p className="text-xs text-[#666666] max-w-2xl leading-relaxed">
+              &ldquo;{countdown.message}&rdquo;
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/admin/countdown"
+          className="px-5 py-2.5 bg-[#0A192F] text-white hover:bg-black text-xs font-serif tracking-widest uppercase rounded transition-colors shrink-0 flex items-center gap-2 shadow-xs"
+        >
+          <span>Edit Drop Message</span>
+          <ArrowUpRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* KPI Cards */}

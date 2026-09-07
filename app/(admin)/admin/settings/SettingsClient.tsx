@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,8 @@ import {
   Save, 
   ShieldCheck, 
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Flame
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -77,6 +79,43 @@ export function SettingsClient() {
                   className="border-[#E5E5E5] bg-[#FAFAFA] text-xs font-serif italic"
                 />
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Drop Countdown & Announcement Message */}
+        <Card className="bg-[#FFFFFF] border-[#E5E5E5] text-[#0A192F] shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-amber-500" />
+                <CardTitle className="font-serif text-xl">Drop Countdown &amp; Announcement Message</CardTitle>
+              </div>
+              <Link
+                href="/admin/countdown"
+                className="text-xs text-[#0A192F] hover:underline font-mono uppercase font-semibold"
+              >
+                Open Full Manager &rarr;
+              </Link>
+            </div>
+            <CardDescription className="text-xs text-[#666666]">
+              Customize the announcement message, drop radar badge, and target timer displayed on the storefront.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg bg-[#FAFAFA] border border-[#E5E5E5] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-[#666666]">Storefront Announcement Narrative:</span>
+                <p className="text-xs text-[#0A192F] font-medium leading-relaxed max-w-xl">
+                  &ldquo;Limited batch five boroughs heavyweight hoodies, vintage graphic tees &amp; headwear. Once sold out, they will not restock.&rdquo;
+                </p>
+              </div>
+              <Link
+                href="/admin/countdown"
+                className="px-4 py-2 bg-[#0A192F] text-white hover:bg-black text-xs font-serif tracking-widest uppercase rounded transition-colors shrink-0 shadow-xs"
+              >
+                Edit Message
+              </Link>
             </div>
           </CardContent>
         </Card>
