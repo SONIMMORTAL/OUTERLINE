@@ -13,21 +13,54 @@ interface ProductDetailClientProps {
   variants: any[]
 }
 
+export interface GalleryItem {
+  url: string
+  type: 'model' | 'front' | 'back'
+  label?: string
+  color?: string
+  viewKind?: 'model' | 'render'
+}
+
 export function ProductDetailClient({ product, variants }: ProductDetailClientProps) {
   const images = product.images || []
   const imagesBack = product.images_back || []
   const modelImage = product.model_image || null
+  const imagesByColor = product.images_by_color || null
   
   // Build paired gallery: Put front views alongside their corresponding back views without duplicates
-  const buildGallery = () => {
-    const galleryItems: { url: string; type: 'model' | 'front' | 'back'; label?: string }[] = []
+  const buildGallery = (): GalleryItem[] => {
+    const galleryItems: GalleryItem[] = []
     const seenUrls = new Set<string>()
 
-    const addImage = (url: string, type: 'model' | 'front' | 'back', label?: string) => {
+    const addImage = (
+      url?: string | null,
+      type: 'model' | 'front' | 'back' = 'front',
+      label?: string,
+      color?: string,
+      viewKind?: 'model' | 'render'
+    ) => {
       if (url && !seenUrls.has(url)) {
         seenUrls.add(url)
-        galleryItems.push({ url, type, label })
+        galleryItems.push({ url, type, label: label || type.toUpperCase(), color, viewKind })
       }
+    }
+
+    // Structured views keyed by colorway
+    if (imagesByColor) {
+      Object.entries(imagesByColor).forEach(([colorName, colorData]: [string, any]) => {
+        if (colorData.model_front) {
+          addImage(colorData.model_front, 'model', 'EDITORIAL', colorName, 'model')
+        }
+        if (colorData.model_back) {
+          addImage(colorData.model_back, 'back', 'BACK', colorName, 'model')
+        }
+        if (colorData.render_front) {
+          addImage(colorData.render_front, 'front', 'RENDER', colorName, 'render')
+        }
+        if (colorData.render_back) {
+          addImage(colorData.render_back, 'back', 'RENDER BACK', colorName, 'render')
+        }
+      })
     }
 
     // Model editorial photo first if present
@@ -45,8 +78,8 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
 
     // Include any variant specific views
     variants.forEach(v => {
-      if (v.image) addImage(v.image, 'front', v.color ? `${v.color.toUpperCase()}` : 'FRONT')
-      if (v.image_back) addImage(v.image_back, 'back', v.color ? `${v.color.toUpperCase()} BACK` : 'BACK')
+      if (v.image) addImage(v.image, 'front', v.color ? `${v.color.toUpperCase()}` : 'FRONT', v.color)
+      if (v.image_back) addImage(v.image_back, 'back', v.color ? `${v.color.toUpperCase()} BACK` : 'BACK', v.color)
     })
 
     return galleryItems
@@ -63,6 +96,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const [selectedSize, setSelectedSize] = useState<string>(sizes[0] || 'M')
   const [activeImage, setActiveImage] = useState<string>(gallery[0]?.url || images[0] || '/placeholder.jpg')
   const [activeImageType, setActiveImageType] = useState<'model' | 'front' | 'back'>(gallery[0]?.type || 'front')
+  const [currentViewKind, setCurrentViewKind] = useState<'model' | 'render'>(gallery[0]?.viewKind || 'model')
   const [sizeGuideOpen, setSizeGuideOpen] = useState<boolean>(false)
 
   const thumbnailsRef = useRef<HTMLDivElement>(null)
@@ -77,9 +111,15 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const currentVariant = variants.find(v => v.color === selectedColor) || variants[0]
   const currentFront = currentVariant?.image || images[0]
   const currentBack = currentVariant?.image_back || imagesBack[0]
+  const hasBackImage = Boolean(
+    currentBack || 
+    (imagesByColor && (imagesByColor[selectedColor]?.model_back || imagesByColor[selectedColor]?.render_back)) || 
+    imagesBack.length > 0
+  )
 
   // Active image index in gallery
   const currentIndex = Math.max(0, gallery.findIndex(item => item.url === activeImage))
+  const currentItem = gallery[currentIndex]
 
   // Cycle to next / prev image
   const goToNextImage = (e?: React.MouseEvent) => {
@@ -87,7 +127,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     if (gallery.length <= 1) return
     const nextIdx = (currentIndex + 1) % gallery.length
     const nextItem = gallery[nextIdx]
-    handleThumbnailClick(nextItem.url, nextItem.type)
+    handleThumbnailClick(nextItem)
   }
 
   const goToPrevImage = (e?: React.MouseEvent) => {
@@ -95,7 +135,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     if (gallery.length <= 1) return
     const prevIdx = (currentIndex - 1 + gallery.length) % gallery.length
     const prevItem = gallery[prevIdx]
-    handleThumbnailClick(prevItem.url, prevItem.type)
+    handleThumbnailClick(prevItem)
   }
 
   // Auto-scroll thumbnails when active image changes
@@ -139,10 +179,40 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     }
   }
 
-  // Map color selection to the correct garment image
+  // Map color selection to the correct garment image and synchronize view mode
   const handleColorSelect = (color: string) => {
     setSelectedColor(color)
     
+    if (imagesByColor && imagesByColor[color]) {
+      const c = imagesByColor[color]
+      if (currentViewKind === 'render') {
+        const target = activeImageType === 'back' && c.render_back 
+          ? c.render_back 
+          : (c.render_front || c.model_front)
+        if (target) {
+          setActiveImage(target)
+          return
+        }
+      } else {
+        const target = activeImageType === 'back' && c.model_back 
+          ? c.model_back 
+          : (c.model_front || c.render_front)
+        if (target) {
+          setActiveImage(target)
+          return
+        }
+      }
+    }
+
+    const colorItems = gallery.filter(g => g.color && g.color.toLowerCase() === color.toLowerCase())
+    if (colorItems.length > 0) {
+      const match = colorItems.find(g => g.type === activeImageType) || colorItems[0]
+      setActiveImage(match.url)
+      setActiveImageType(match.type)
+      if (match.viewKind) setCurrentViewKind(match.viewKind)
+      return
+    }
+
     const variantMatch = variants.find(
       v => v.color && v.color.toLowerCase() === color.toLowerCase() && v.image
     )
@@ -158,11 +228,20 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   }
 
   // When user clicks an image thumbnail, sync color and active view
-  const handleThumbnailClick = (imgUrl: string, type: 'model' | 'front' | 'back') => {
-    setActiveImage(imgUrl)
-    setActiveImageType(type)
+  const handleThumbnailClick = (item: GalleryItem) => {
+    setActiveImage(item.url)
+    setActiveImageType(item.type)
+    if (item.viewKind) {
+      setCurrentViewKind(item.viewKind)
+    }
     
-    const variantMatch = variants.find(v => v.image === imgUrl || v.image_back === imgUrl)
+    // Keyed to its proper color pill
+    if (item.color) {
+      setSelectedColor(item.color)
+      return
+    }
+
+    const variantMatch = variants.find(v => v.image === item.url || v.image_back === item.url)
     if (variantMatch?.color) {
       setSelectedColor(variantMatch.color)
     }
@@ -242,7 +321,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           onTouchEnd={handleTouchEnd}
         >
           {/* Quick Front / Back Toggle Pill */}
-          {currentBack && (
+          {hasBackImage && (
             <div 
               className="absolute top-4 right-4 z-20 flex bg-white/95 backdrop-blur-md rounded-full p-1 border border-[#E5E5E5] shadow-xs text-xs font-mono"
               onClick={(e) => e.stopPropagation()}
@@ -250,13 +329,23 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
               <button 
                 type="button"
                 onClick={() => {
+                  setActiveImageType('front')
+                  if (imagesByColor && imagesByColor[selectedColor]) {
+                    const c = imagesByColor[selectedColor]
+                    if (currentViewKind === 'render' && c.render_front) {
+                      setActiveImage(c.render_front)
+                      return
+                    }
+                    if (c.model_front) {
+                      setActiveImage(c.model_front)
+                      return
+                    }
+                  }
                   const backIdx = imagesBack.indexOf(activeImage)
                   if (backIdx !== -1 && images[backIdx]) {
                     setActiveImage(images[backIdx])
-                    setActiveImageType('front')
                   } else if (currentFront) {
                     setActiveImage(currentFront)
-                    setActiveImageType('front')
                   }
                 }}
                 className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold cursor-pointer ${
@@ -270,13 +359,23 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
               <button 
                 type="button"
                 onClick={() => {
+                  setActiveImageType('back')
+                  if (imagesByColor && imagesByColor[selectedColor]) {
+                    const c = imagesByColor[selectedColor]
+                    if (currentViewKind === 'render' && c.render_back) {
+                      setActiveImage(c.render_back)
+                      return
+                    }
+                    if (c.model_back) {
+                      setActiveImage(c.model_back)
+                      return
+                    }
+                  }
                   const frontIdx = images.indexOf(activeImage)
                   if (frontIdx !== -1 && imagesBack[frontIdx]) {
                     setActiveImage(imagesBack[frontIdx])
-                    setActiveImageType('back')
                   } else if (currentBack) {
                     setActiveImage(currentBack)
-                    setActiveImageType('back')
                   }
                 }}
                 className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all font-semibold cursor-pointer ${
@@ -339,7 +438,9 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-[#666666] px-1">
               <span>Scroll views ({gallery.length} photos)</span>
-              <span className="font-semibold text-[#0A192F]">{gallery[currentIndex]?.label || ''}</span>
+              <span className="font-semibold text-[#0A192F]">
+                {currentItem?.color ? `${currentItem.color} • ${currentItem.label || ''}` : (currentItem?.label || '')}
+              </span>
             </div>
             <div className="relative flex items-center group/thumbs">
               {gallery.length > 4 && (
@@ -362,7 +463,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                     <div 
                       key={idx} 
                       ref={(el) => { thumbnailRefs.current[idx] = el }}
-                      onClick={() => handleThumbnailClick(item.url, item.type)}
+                      onClick={() => handleThumbnailClick(item)}
                       className={`shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-md relative overflow-hidden cursor-pointer transition-all snap-center bg-[#F9F9F9] ${
                         isSelected ? 'border-2 border-[#0A192F] ring-2 ring-[#0A192F]/30 scale-[1.03] shadow-sm' : 'border border-[#E5E5E5] hover:border-[#0A192F]/60'
                       }`}
@@ -376,7 +477,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                       />
                       {item.label && (
                         <span className={`absolute bottom-0.5 right-0.5 text-[7px] px-1 rounded font-mono font-bold tracking-widest ${
-                          item.type === 'back' ? 'bg-[#0A192F] text-white' : 'bg-black/50 text-white'
+                          item.type === 'back' ? 'bg-[#0A192F] text-white' : item.viewKind === 'render' ? 'bg-[#2563EB] text-white' : 'bg-black/60 text-white'
                         }`}>
                           {item.label}
                         </span>

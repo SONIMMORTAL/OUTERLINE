@@ -8,6 +8,13 @@ export interface ProductVariant {
   inventory_quantity: number
 }
 
+export interface ProductColorImages {
+  model_front?: string | null
+  model_back?: string | null
+  render_front?: string | null
+  render_back?: string | null
+}
+
 export interface Product {
   id: string
   title: string
@@ -23,6 +30,7 @@ export interface Product {
   model_image: string | null
   images: string[]
   images_back: string[]
+  images_by_color?: Record<string, ProductColorImages>
   product_variants: ProductVariant[]
 }
 
@@ -166,12 +174,30 @@ export const mockProducts: Product[] = [
     "model_image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
     "images": [
       "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png"
+      "/been-brooklyn-baller-hoodie-blk-blue-render-front.jpg",
+      "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
+      "/been-brooklyn-baller-hoodie-blk-red-render-front.png"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png"
+      "/been-brooklyn-baller-hoodie-blk-blue-render-back.jpg",
+      "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
+      "/been-brooklyn-baller-hoodie-blk-red-render-back.png"
     ],
+    "images_by_color": {
+      "Black/Blue": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
+        "render_front": "/been-brooklyn-baller-hoodie-blk-blue-render-front.jpg",
+        "render_back": "/been-brooklyn-baller-hoodie-blk-blue-render-back.jpg"
+      },
+      "Black/Red": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
+        "render_front": "/been-brooklyn-baller-hoodie-blk-red-render-front.png",
+        "render_back": "/been-brooklyn-baller-hoodie-blk-red-render-back.png"
+      }
+    },
     "product_variants": [
       {
         "id": "2-black-blue-s",
@@ -262,16 +288,50 @@ export const mockProducts: Product[] = [
     "model_image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
     "images": [
       "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
+      "/been-brooklyn-baller-tee-blk-blue-render-front.png",
       "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
+      "/been-brooklyn-baller-tee-blk-red-render-front.png",
       "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png"
+      "/been-brooklyn-baller-tee-white-blue-render-front.png",
+      "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
+      "/been-brooklyn-baller-tee-white-red-render-front.png"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
+      "/been-brooklyn-baller-tee-blk-blue-render-back.png",
       "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
+      "/been-brooklyn-baller-tee-blk-red-render-back.png",
       "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png"
+      "/been-brooklyn-baller-tee-white-blue-render-back.png",
+      "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
+      "/been-brooklyn-baller-tee-white-red-render-back.png"
     ],
+    "images_by_color": {
+      "Black/Blue": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
+        "render_front": "/been-brooklyn-baller-tee-blk-blue-render-front.png",
+        "render_back": "/been-brooklyn-baller-tee-blk-blue-render-back.png"
+      },
+      "Black/Red": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
+        "render_front": "/been-brooklyn-baller-tee-blk-red-render-front.png",
+        "render_back": "/been-brooklyn-baller-tee-blk-red-render-back.png"
+      },
+      "White/Blue": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
+        "render_front": "/been-brooklyn-baller-tee-white-blue-render-front.png",
+        "render_back": "/been-brooklyn-baller-tee-white-blue-render-back.png"
+      },
+      "White/Red": {
+        "model_front": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
+        "model_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
+        "render_front": "/been-brooklyn-baller-tee-white-red-render-front.png",
+        "render_back": "/been-brooklyn-baller-tee-white-red-render-back.png"
+      }
+    },
     "product_variants": [
       {
         "id": "3-black-blue-s",
