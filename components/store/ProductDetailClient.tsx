@@ -363,8 +363,8 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                       key={idx} 
                       ref={(el) => { thumbnailRefs.current[idx] = el }}
                       onClick={() => handleThumbnailClick(item.url, item.type)}
-                      className={`shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-md border relative overflow-hidden cursor-pointer transition-all snap-center bg-[#F9F9F9] ${
-                        isSelected ? 'border-[#0A192F] ring-2 ring-[#0A192F]/20 scale-[1.02]' : 'border-[#E5E5E5] hover:border-[#0A192F]'
+                      className={`shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-md relative overflow-hidden cursor-pointer transition-all snap-center bg-[#F9F9F9] ${
+                        isSelected ? 'border-2 border-[#0A192F] ring-2 ring-[#0A192F]/30 scale-[1.03] shadow-sm' : 'border border-[#E5E5E5] hover:border-[#0A192F]/60'
                       }`}
                     >
                       <Image 
@@ -434,16 +434,16 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                     <button
                       key={color}
                       onClick={() => handleColorSelect(color)}
-                      className={`w-9 h-9 rounded-full border-2 transition-all relative flex items-center justify-center shadow-xs ${
+                      className={`w-9 h-9 rounded-full transition-all relative flex items-center justify-center shadow-xs ${
                         isSelected 
-                          ? 'border-[#0A192F] scale-110 ring-2 ring-[#0A192F]/20' 
-                          : 'border-white/80 ring-1 ring-[#E5E5E5] hover:scale-105'
+                          ? 'border-2 border-white ring-2 ring-[#0A192F] ring-offset-2 scale-110 shadow-md' 
+                          : 'border border-[#E5E5E5] hover:scale-105 hover:border-[#0A192F]/50'
                       }`}
                       style={swatchStyle}
                       title={color}
                     >
                       {isSelected && (
-                        <Check className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+                        <Check className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
                       )}
                     </button>
                   )

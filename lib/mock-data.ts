@@ -200,143 +200,75 @@ export const mockProducts: Product[] = [
     "model_image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
     "images": [
       "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_hoodie.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie.jpg"
+      "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie_back.jpg"
+      "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png"
     ],
     "product_variants": [
       {
-        "id": "2-baller-black-blue-s",
+        "id": "2-black-blue-s",
         "size": "S",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-blue-m",
+        "id": "2-black-blue-m",
         "size": "M",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-blue-l",
+        "id": "2-black-blue-l",
         "size": "L",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-blue-xl",
+        "id": "2-black-blue-xl",
         "size": "XL",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-a2383f3d-d5d5-4e00-b234-a805eee97f51-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7598b7f9-9714-416e-afba-4bf7dd74e8d6-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-red-s",
+        "id": "2-black-red-s",
         "size": "S",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-red-m",
+        "id": "2-black-red-m",
         "size": "M",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-red-l",
+        "id": "2-black-red-l",
         "size": "L",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "2-baller-black-red-xl",
+        "id": "2-black-red-xl",
         "size": "XL",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-4e2f213c-0849-4984-ba90-acae102dcee5-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-7171cfbe-2773-4bf2-b1d0-60b8550afab0-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-red-stripe-s",
-        "size": "S",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-red-stripe-m",
-        "size": "M",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-red-stripe-l",
-        "size": "L",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-red-stripe-xl",
-        "size": "XL",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-blue-stripe-s",
-        "size": "S",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-blue-stripe-m",
-        "size": "M",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-blue-stripe-l",
-        "size": "L",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie_back.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "2-black-blue-stripe-xl",
-        "size": "XL",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_hoodie/grey_baller_blue_stripe_wht_hoodie_back.jpg",
         "inventory_quantity": 15
       }
     ]
@@ -366,311 +298,141 @@ export const mockProducts: Product[] = [
       "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
       "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
       "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/grey_baller_red_stripe_blk_tee.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/grey_baller_red_stripe_wht_tee.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/grey_baller_blue_stripe_blk_tee.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/grey_baller_blue_stripe_wht_tee.jpg"
+      "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
       "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
       "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-      "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/been_bk__wht_tee_bac2.jpg"
+      "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png"
     ],
     "product_variants": [
       {
-        "id": "3-baller-black-blue-s",
+        "id": "3-black-blue-s",
         "size": "S",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-blue-m",
+        "id": "3-black-blue-m",
         "size": "M",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-blue-l",
+        "id": "3-black-blue-l",
         "size": "L",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-blue-xl",
+        "id": "3-black-blue-xl",
         "size": "XL",
-        "color": "Baller Black/Blue",
+        "color": "Black/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-fdd62316-25df-4c8f-bdb0-00c34acf1be6-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-48ea7409-602c-4ebc-ab12-9b2b4da6d993-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-red-s",
+        "id": "3-black-red-s",
         "size": "S",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-red-m",
+        "id": "3-black-red-m",
         "size": "M",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-red-l",
+        "id": "3-black-red-l",
         "size": "L",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-black-red-xl",
+        "id": "3-black-red-xl",
         "size": "XL",
-        "color": "Baller Black/Red",
+        "color": "Black/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-ef9b1dd7-b53d-4f43-8c23-cec3246c4ce4-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-45036c46-37f0-49f6-92d6-3a51425191b8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-blue-s",
+        "id": "3-white-blue-s",
         "size": "S",
-        "color": "Baller White/Blue",
+        "color": "White/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-blue-m",
+        "id": "3-white-blue-m",
         "size": "M",
-        "color": "Baller White/Blue",
+        "color": "White/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-blue-l",
+        "id": "3-white-blue-l",
         "size": "L",
-        "color": "Baller White/Blue",
+        "color": "White/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-blue-xl",
+        "id": "3-white-blue-xl",
         "size": "XL",
-        "color": "Baller White/Blue",
+        "color": "White/Blue",
         "image": "/outer-line-models-uniform-1200x1500/exec-0e29a152-87df-4b38-a765-0360001d80c0-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-74c9f991-cdd8-41d9-852f-96aa44c55af8-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-red-s",
+        "id": "3-white-red-s",
         "size": "S",
-        "color": "Baller White/Red",
+        "color": "White/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-red-m",
+        "id": "3-white-red-m",
         "size": "M",
-        "color": "Baller White/Red",
+        "color": "White/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-red-l",
+        "id": "3-white-red-l",
         "size": "L",
-        "color": "Baller White/Red",
+        "color": "White/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
         "inventory_quantity": 15
       },
       {
-        "id": "3-baller-white-red-xl",
+        "id": "3-white-red-xl",
         "size": "XL",
-        "color": "Baller White/Red",
+        "color": "White/Red",
         "image": "/outer-line-models-uniform-1200x1500/exec-2898790c-ba7c-4f7e-bb51-bfc48ead0475-4x5.png",
         "image_back": "/outer-line-models-uniform-1200x1500/exec-d7ae12f2-0ccb-43b2-b54f-1a3cee4e7988-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-baller-white-black-s",
-        "size": "S",
-        "color": "Baller White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-baller-white-black-m",
-        "size": "M",
-        "color": "Baller White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-baller-white-black-l",
-        "size": "L",
-        "color": "Baller White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-baller-white-black-xl",
-        "size": "XL",
-        "color": "Baller White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-red-stripe-s",
-        "size": "S",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/grey_baller_red_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-red-stripe-m",
-        "size": "M",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/grey_baller_red_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-red-stripe-l",
-        "size": "L",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/grey_baller_red_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-red-stripe-xl",
-        "size": "XL",
-        "color": "Black/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/grey_baller_red_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-red-stripe-s",
-        "size": "S",
-        "color": "White/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/grey_baller_red_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-red-stripe-m",
-        "size": "M",
-        "color": "White/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/grey_baller_red_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-red-stripe-l",
-        "size": "L",
-        "color": "White/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/grey_baller_red_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-red-stripe-xl",
-        "size": "XL",
-        "color": "White/Red Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/grey_baller_red_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_red_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-blue-stripe-s",
-        "size": "S",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/grey_baller_blue_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-blue-stripe-m",
-        "size": "M",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/grey_baller_blue_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-blue-stripe-l",
-        "size": "L",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/grey_baller_blue_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-black-blue-stripe-xl",
-        "size": "XL",
-        "color": "Black/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/grey_baller_blue_stripe_blk_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-blue-stripe-s",
-        "size": "S",
-        "color": "White/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/grey_baller_blue_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-blue-stripe-m",
-        "size": "M",
-        "color": "White/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/grey_baller_blue_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-blue-stripe-l",
-        "size": "L",
-        "color": "White/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/grey_baller_blue_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "3-white-blue-stripe-xl",
-        "size": "XL",
-        "color": "White/Blue Stripe",
-        "image": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/grey_baller_blue_stripe_wht_tee.jpg",
-        "image_back": "/grey_baller_red_stripe_blk_hoodie/grey_baller_blue_stripe_wht_tee/been_bk__wht_tee_bac2.jpg",
         "inventory_quantity": 15
       }
     ]
