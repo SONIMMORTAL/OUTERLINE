@@ -47,7 +47,15 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
 
     // Structured views keyed by colorway
     if (imagesByColor) {
-      Object.entries(imagesByColor).forEach(([colorName, colorData]: [string, any]) => {
+      const colorKeys = colors.length > 0 
+        ? [
+            ...colors.filter(c => imagesByColor[c]),
+            ...Object.keys(imagesByColor).filter(c => !colors.includes(c))
+          ]
+        : Object.keys(imagesByColor)
+
+      colorKeys.forEach((colorName) => {
+        const colorData = imagesByColor[colorName]
         if (colorData.model_front) {
           addImage(colorData.model_front, 'model', 'EDITORIAL', colorName, 'model')
         }
@@ -185,7 +193,15 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     
     if (imagesByColor && imagesByColor[color]) {
       const c = imagesByColor[color]
-      if (currentViewKind === 'render') {
+      const hasModel = Boolean(c.model_front || c.model_back)
+      const hasRender = Boolean(c.render_front || c.render_back)
+
+      // If switching from a colorway that had NO model (only renders) to one that HAS a model,
+      // default back to model view so editorial photos are showcased
+      const prevColorData = imagesByColor[selectedColor]
+      const prevHadModel = Boolean(prevColorData?.model_front || prevColorData?.model_back)
+
+      if (currentViewKind === 'render' && hasRender && prevHadModel) {
         const target = activeImageType === 'back' && c.render_back 
           ? c.render_back 
           : (c.render_front || c.model_front)
@@ -193,10 +209,20 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           setActiveImage(target)
           return
         }
-      } else {
+      } else if (hasModel) {
+        setCurrentViewKind('model')
         const target = activeImageType === 'back' && c.model_back 
           ? c.model_back 
           : (c.model_front || c.render_front)
+        if (target) {
+          setActiveImage(target)
+          return
+        }
+      } else if (hasRender) {
+        setCurrentViewKind('render')
+        const target = activeImageType === 'back' && c.render_back 
+          ? c.render_back 
+          : (c.render_front || c.model_front)
         if (target) {
           setActiveImage(target)
           return
@@ -340,6 +366,10 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                       setActiveImage(c.model_front)
                       return
                     }
+                    if (c.render_front) {
+                      setActiveImage(c.render_front)
+                      return
+                    }
                   }
                   const backIdx = imagesBack.indexOf(activeImage)
                   if (backIdx !== -1 && images[backIdx]) {
@@ -368,6 +398,10 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                     }
                     if (c.model_back) {
                       setActiveImage(c.model_back)
+                      return
+                    }
+                    if (c.render_back) {
+                      setActiveImage(c.render_back)
                       return
                     }
                   }

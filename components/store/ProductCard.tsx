@@ -25,7 +25,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const compareAtPrice = compare_at_price
   
   const frontImage = model_image || images[0] || '/placeholder.jpg'
-  const backImage = (images_back && images_back.length > 0) ? images_back[0] : null
+  const backImage = model_image
+    ? (images_back?.find(img => img.includes('model')) || images_back?.[0] || null)
+    : ((images_back && images_back.length > 0) ? images_back[0] : null)
 
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3, ease: "easeOut" }}>

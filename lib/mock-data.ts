@@ -89,8 +89,6 @@ export const mockProducts: Product[] = [
     ],
     "images_by_color": {
       "Black/Blue": {
-        "model_front": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
-        "model_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
         "render_front": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
         "render_back": "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg"
       },
