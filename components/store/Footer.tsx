@@ -192,7 +192,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-20 pt-8 border-t border-[#E5E5E5] flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[#666666] text-[10px] tracking-widest uppercase">
-            © 2026 OUTER LINE NYC. All rights reserved.
+            © 2026 OUTER LINE USA. All rights reserved.
           </p>
           <p className="text-[#666666] text-[10px] tracking-widest uppercase flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#0A192F] inline-block animate-pulse" />

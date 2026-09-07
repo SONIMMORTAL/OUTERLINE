@@ -79,7 +79,7 @@ export default function CustomerReceipt({
           </Section>
           <Hr style={hr} />
           <Section style={footer}>
-            <Text style={footerText}>Outerline NYC © 2026</Text>
+            <Text style={footerText}>Outerline USA © 2026</Text>
           </Section>
         </Container>
       </Body>

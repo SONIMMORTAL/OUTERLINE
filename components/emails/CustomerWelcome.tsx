@@ -67,7 +67,7 @@ export default function CustomerWelcome({
 
           {/* Footer */}
           <Section style={footer}>
-            <Text style={footerText}>OUTERLINE NYC © 2026 • ALL RIGHTS RESERVED</Text>
+            <Text style={footerText}>OUTERLINE USA © 2026 • ALL RIGHTS RESERVED</Text>
             <Text style={footerSubtext}>Brooklyn, New York</Text>
           </Section>
         </Container>
