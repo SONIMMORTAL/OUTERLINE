@@ -698,13 +698,13 @@ export const mockProducts: Product[] = [
     "model_image": "/outer-line-models-uniform-1200x1500/exec-717c3829-88e6-44c4-9f77-26fa9a148190-4x5.png",
     "images": [
       "/outer-line-models-uniform-1200x1500/exec-717c3829-88e6-44c4-9f77-26fa9a148190-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
+      "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee.jpg",
       "/been_brooklyn_blk&wht_blk_tee/been_brooklyn_blk&wht_blk_tee/been_brooklyn_blk&wht_blk_tee.jpg",
       "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg"
     ],
     "images_back": [
       "/outer-line-models-uniform-1200x1500/exec-eb174f07-b6e9-4817-9f0e-0086f5a0cb90-4x5.png",
-      "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
+      "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee_bac.jpg",
       "/been_brooklyn_blk&wht_blk_tee/been_brooklyn_blk&wht_blk_tee/been_brooklyn_blk&wht_blk_tee_bac.jpg",
       "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg"
     ],
@@ -745,32 +745,32 @@ export const mockProducts: Product[] = [
         "id": "4-white-black-s",
         "size": "S",
         "color": "White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-white-black-m",
         "size": "M",
         "color": "White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-white-black-l",
         "size": "L",
         "color": "White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-white-black-xl",
         "size": "XL",
         "color": "White/Black",
-        "image": "/outer-line-models-uniform-1200x1500/exec-5a873164-15fe-469d-a7d3-6376501bf0fd-4x5.png",
-        "image_back": "/outer-line-models-uniform-1200x1500/exec-4295be89-0ecf-4869-bc2b-77c7bcf3fea8-4x5.png",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
@@ -809,32 +809,32 @@ export const mockProducts: Product[] = [
         "id": "4-black-blue-s",
         "size": "S",
         "color": "Black/Blue",
-        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
-        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-black-blue-m",
         "size": "M",
         "color": "Black/Blue",
-        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
-        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-black-blue-l",
         "size": "L",
         "color": "Black/Blue",
-        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
-        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee_bac.jpg",
         "inventory_quantity": 15
       },
       {
         "id": "4-black-blue-xl",
         "size": "XL",
         "color": "Black/Blue",
-        "image": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee.jpg",
-        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_bk&wht_wh_tee/been_bk&wht_wh_tee_bac.jpg",
+        "image": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee.jpg",
+        "image_back": "/been_brooklyn_blk&wht_blk_tee/been_brookyn_blk_blue_blk_tee/been_brookyn_blk_blue_blk_tee_bac.jpg",
         "inventory_quantity": 15
       }
     ]
