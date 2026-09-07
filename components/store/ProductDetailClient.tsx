@@ -27,6 +27,10 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   const modelImage = product.model_image || null
   const imagesByColor = product.images_by_color || null
   
+  // Extract unique colors and sizes from variants before building gallery
+  const colors = Array.from(new Set(variants.map(v => v.color))).filter(Boolean)
+  const sizes = Array.from(new Set(variants.map(v => v.size))).filter(Boolean)
+
   // Build paired gallery: Put front views alongside their corresponding back views without duplicates
   const buildGallery = (): GalleryItem[] => {
     const galleryItems: GalleryItem[] = []
@@ -95,10 +99,6 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   
   const gallery = buildGallery()
   
-  // Extract unique colors and sizes from variants
-  const colors = Array.from(new Set(variants.map(v => v.color))).filter(Boolean)
-  const sizes = Array.from(new Set(variants.map(v => v.size))).filter(Boolean)
-
   // Start with the primary front view
   const [selectedColor, setSelectedColor] = useState<string>(colors[0] || 'Standard')
   const [selectedSize, setSelectedSize] = useState<string>(sizes[0] || 'M')
@@ -472,9 +472,11 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-[#666666] px-1">
               <span>Scroll views ({gallery.length} photos)</span>
-              <span className="font-semibold text-[#0A192F]">
-                {currentItem?.color ? `${currentItem.color} • ${currentItem.label || ''}` : (currentItem?.label || '')}
-              </span>
+              {currentItem?.color && (
+                <span className="font-semibold text-[#0A192F]">
+                  {currentItem.color}
+                </span>
+              )}
             </div>
             <div className="relative flex items-center group/thumbs">
               {gallery.length > 4 && (
@@ -509,13 +511,6 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                         sizes="(max-width: 1024px) 20vw, 10vw"
                         className="object-contain p-1"
                       />
-                      {item.label && (
-                        <span className={`absolute bottom-0.5 right-0.5 text-[7px] px-1 rounded font-mono font-bold tracking-widest ${
-                          item.type === 'back' ? 'bg-[#0A192F] text-white' : item.viewKind === 'render' ? 'bg-[#2563EB] text-white' : 'bg-black/60 text-white'
-                        }`}>
-                          {item.label}
-                        </span>
-                      )}
                     </div>
                   )
                 })}
