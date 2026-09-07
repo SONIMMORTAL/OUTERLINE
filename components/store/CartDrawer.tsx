@@ -50,8 +50,8 @@ const UPSELL_PRODUCTS = [
     slug: 'been-brooklyn-hoodie',
     sku: 'BB-HD-001',
     price: 55,
-    image: '/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png',
-    defaultColor: 'BLACK/BLACK',
+    image: '/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg',
+    defaultColor: 'BLACK/BLUE',
     sizes: ['S', 'M', 'L', 'XL']
   },
   {

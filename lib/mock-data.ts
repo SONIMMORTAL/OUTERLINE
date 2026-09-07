@@ -68,50 +68,16 @@ export const mockProducts: Product[] = [
       "Nickel eyelets"
     ],
     "editorial_story": "forged out of the raw energy of brooklyn. Made of heavyweight cotton with an iconic nyc style",
-    "model_image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
+    "model_image": null,
     "images": [
-      "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_brookyn_blk_blue_blk_hoodie.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_brookyn_blk n wh_blk_hoodie.jpg"
     ],
     "images_back": [
-      "/been-brooklyn-blk-hood-blk-text-model-new.png",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_navy_hoodie/been_bk_blk_blk_hoodie_back.jpg",
       "/been_brooklyn_blk_navy_hoodie/been_brooklyn_blk_blk_hoodie/been_bk_blk_blk_hoodie_back.jpg"
     ],
     "product_variants": [
-      {
-        "id": "1-black-black-s",
-        "size": "S",
-        "color": "Black/Black",
-        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
-        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "1-black-black-m",
-        "size": "M",
-        "color": "Black/Black",
-        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
-        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "1-black-black-l",
-        "size": "L",
-        "color": "Black/Black",
-        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
-        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
-        "inventory_quantity": 15
-      },
-      {
-        "id": "1-black-black-xl",
-        "size": "XL",
-        "color": "Black/Black",
-        "image": "/been-brooklyn-blk-hood-blk-text-model-new-front-frt.png",
-        "image_back": "/been-brooklyn-blk-hood-blk-text-model-new.png",
-        "inventory_quantity": 15
-      },
       {
         "id": "1-black-blue-s",
         "size": "S",
