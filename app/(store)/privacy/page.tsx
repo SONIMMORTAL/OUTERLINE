@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'Privacy Policy | Outerline NYC',
-  description: 'Privacy Policy for Outerline NYC (outerlineusa.com).',
+  title: 'Privacy Policy',
+  description: 'Privacy Policy for outerlineusa.com, dba Ensink LLC.',
 }
 
 export default function PrivacyPolicyPage() {
@@ -94,8 +94,12 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>We use Stripe and PayPal to process payments securely.</li>
+              <li>We use Mailchimp to send the marketing emails and text messages you sign up for.</li>
               <li>We use analytics services to help us understand how our customers use the Site.</li>
             </ul>
+            <p>
+              <strong>Text messaging.</strong> If you opt in to our text messages, we collect your mobile number and a record of your consent. Mobile numbers and SMS opt-in consent are never sold, rented, or shared with third parties or affiliates for their own marketing or promotional purposes. We share them only with the service providers that deliver messages on our behalf. Reply STOP to any message to opt out.
+            </p>
             <p>
               Finally, we may also share your Personal Information to comply with applicable laws and regulations, to respond to a subpoena, search warrant, or other lawful request for information we receive, or to otherwise protect our rights.
             </p>

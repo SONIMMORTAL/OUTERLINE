@@ -80,33 +80,52 @@ export function CountdownClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  const persist = async (patch: Partial<CountdownConfig>): Promise<CountdownConfig> => {
+    const res = await fetch('/api/countdown', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || 'Failed to save settings')
+    }
+    return data.config
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
 
     try {
-      const payload: Partial<CountdownConfig> = {
+      const saved = await persist({
         ...config,
         targetDate: dateInput ? new Date(dateInput).toISOString() : config.targetDate
-      }
-
-      const res = await fetch('/api/countdown', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
       })
+      setConfig(saved)
+      setSavedSuccess(true)
+      toast.success('Countdown announcement message and settings updated live!')
+      setTimeout(() => setSavedSuccess(false), 3000)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Network error saving countdown settings')
+    } finally {
+      setSaving(false)
+    }
+  }
 
-      const data = await res.json()
-      if (data?.success) {
-        setConfig(data.config)
-        setSavedSuccess(true)
-        toast.success('Countdown announcement message and settings updated live!')
-        setTimeout(() => setSavedSuccess(false), 3000)
-      } else {
-        toast.error(data?.error || 'Failed to save settings')
-      }
-    } catch {
-      toast.error('Network error saving countdown settings')
+  // Visibility is a switch, so it saves on its own instead of waiting for the Save button at the bottom of the form.
+  const handleVisibilityChange = async (isActive: boolean) => {
+    const previous = config.is_active
+    setConfig(prev => ({ ...prev, is_active: isActive }))
+    setSaving(true)
+
+    try {
+      const saved = await persist({ is_active: isActive })
+      setConfig(prev => ({ ...prev, is_active: saved.is_active, updated_at: saved.updated_at }))
+      toast.success(isActive ? 'Countdown is now live on the storefront.' : 'Countdown hidden from the storefront.')
+    } catch (err) {
+      setConfig(prev => ({ ...prev, is_active: previous }))
+      toast.error(err instanceof Error ? err.message : 'Could not update countdown visibility')
     } finally {
       setSaving(false)
     }
@@ -365,9 +384,12 @@ export function CountdownClient() {
                   </div>
                   <input
                     type="checkbox"
+                    role="switch"
+                    aria-label="Display countdown on storefront"
                     checked={config.is_active}
-                    onChange={(e) => setConfig({ ...config, is_active: e.target.checked })}
-                    className="rounded border-[#E5E5E5] text-[#0A192F] w-4 h-4 cursor-pointer"
+                    disabled={saving}
+                    onChange={(e) => handleVisibilityChange(e.target.checked)}
+                    className="rounded border-[#E5E5E5] accent-[#0A192F] w-5 h-5 cursor-pointer disabled:opacity-50"
                   />
                 </div>
               </CardContent>

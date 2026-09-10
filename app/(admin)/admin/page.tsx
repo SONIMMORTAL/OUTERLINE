@@ -22,7 +22,7 @@ import {
 
 import { requireAdmin } from '@/lib/auth/admin'
 import { getLocalOrders } from '@/lib/orders-store'
-import { getLocalCountdown } from '@/lib/countdown-store'
+import { getCountdown } from '@/lib/countdown-store'
 
 export default async function AdminDashboard() {
   await requireAdmin()
@@ -66,7 +66,7 @@ export default async function AdminDashboard() {
   const orderCount = validOrders.length
   const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0
 
-  const countdown = getLocalCountdown()
+  const countdown = await getCountdown()
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

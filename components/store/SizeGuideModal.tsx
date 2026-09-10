@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { Ruler, Sparkles, Check, Info } from 'lucide-react'
+import { Ruler, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface SizeGuideModalProps {
@@ -20,14 +20,14 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
   // Convert fraction / decimal inches string to cm if unit === 'cm'
   const formatVal = (valInInches: string) => {
     if (unit === 'in') return `${valInInches}"`
-    
+
     // Parse fraction like "27 1/2" or "30" or "+/- 1"
     if (valInInches.startsWith('+/-')) {
       const numStr = valInInches.replace('+/-', '').trim()
       const n = numStr.includes('1/2') ? 1.5 : parseFloat(numStr) || 1
       return `+/- ${(n * 2.54).toFixed(1)} cm`
     }
-    
+
     let total = 0
     if (valInInches.includes('1/2')) {
       const whole = parseInt(valInInches.split(' ')[0], 10) || 0
@@ -84,12 +84,13 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-6 md:p-8 bg-[#FFFFFF] text-[#0A192F] border border-[#E5E5E5] rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-2 pb-4 border-b border-[#E5E5E5]">
-          <div className="flex items-center justify-between">
+      {/* The base dialog caps width at sm:max-w-sm, so the desktop width must be overridden at the same breakpoint. */}
+      <DialogContent className="w-[calc(100%-2rem)] max-w-5xl sm:max-w-5xl p-5 md:p-8 bg-[#FFFFFF] text-[#0A192F] border border-[#E5E5E5] rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden [&>*]:min-w-0">
+        <DialogHeader className="space-y-2 pb-4 pr-8 border-b border-[#E5E5E5]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Ruler className="w-5 h-5 text-[#0A192F]" />
-              <DialogTitle className="font-serif text-2xl tracking-wider text-[#0A192F]">
+              <Ruler className="w-5 h-5 shrink-0 text-[#0A192F]" />
+              <DialogTitle className="font-serif text-lg sm:text-2xl tracking-wider text-[#0A192F] leading-tight">
                 GARMENT SIZE & MEASUREMENT GUIDE
               </DialogTitle>
             </div>
@@ -98,15 +99,16 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
             </Badge>
           </div>
           <DialogDescription className="text-xs text-[#666666]">
-            All measurements are taken with the garment laid completely flat. Follow our guideline below to find your tailored fit.
+            All measurements are taken with the garment laid completely flat. All sales are final and fit is not a return reason, so compare these numbers with a garment you already own.
           </DialogDescription>
         </DialogHeader>
 
         {/* Controls: Category Selector & Unit Switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
           {/* Category Tabs */}
-          <div className="flex items-center p-1 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5] w-fit">
             <button
+              type="button"
               onClick={() => setCategory('hoodies')}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
                 category === 'hoodies'
@@ -117,6 +119,7 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
               Hoodies & Fleece (10 oz)
             </button>
             <button
+              type="button"
               onClick={() => setCategory('tees')}
               className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${
                 category === 'tees'
@@ -129,10 +132,11 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
           </div>
 
           {/* Unit Toggle */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <span className="text-xs text-[#666666] font-medium">Unit:</span>
             <div className="flex items-center p-1 bg-[#F5F5F5] rounded-lg border border-[#E5E5E5]">
               <button
+                type="button"
                 onClick={() => setUnit('in')}
                 className={`px-3 py-1 text-xs font-mono font-medium rounded-md transition-all ${
                   unit === 'in'
@@ -143,6 +147,7 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
                 Inches (IN)
               </button>
               <button
+                type="button"
                 onClick={() => setUnit('cm')}
                 className={`px-3 py-1 text-xs font-mono font-medium rounded-md transition-all ${
                   unit === 'cm'
@@ -156,12 +161,12 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
           </div>
         </div>
 
-        {/* The Size Chart Table */}
-        <div className="overflow-x-auto rounded-lg border border-[#E5E5E5] bg-[#FFFFFF] shadow-sm">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* The Size Chart Table — horizontal scrolling stays inside this container */}
+        <div className="overflow-x-auto overscroll-x-contain rounded-lg border border-[#E5E5E5] bg-[#FFFFFF] shadow-sm">
+          <table className="w-full min-w-[720px] text-left border-collapse text-xs">
             <thead>
               <tr className="bg-[#0A192F] text-[#FFFFFF]">
-                <th className="py-3 px-4 font-semibold tracking-wider font-mono text-[11px] uppercase border-r border-[#1E2D42]">
+                <th className="sticky left-0 z-10 bg-[#0A192F] py-3 px-4 font-semibold tracking-wider font-mono text-[11px] uppercase border-r border-[#1E2D42]">
                   Measurement Spec
                 </th>
                 {activeSpecs.sizes.map((s) => (
@@ -175,27 +180,30 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E5E5]">
-              {activeSpecs.rows.map((row, idx) => (
-                <tr key={row.name} className={idx % 2 === 0 ? 'bg-[#FFFFFF]' : 'bg-[#FAFAFA]'}>
-                  <td className="py-3.5 px-4 font-medium text-[#0A192F] whitespace-nowrap border-r border-[#E5E5E5]">
-                    {row.name}
-                  </td>
-                  {row.values.map((v, i) => (
-                    <td key={i} className="py-3.5 px-3.5 text-center font-mono text-[#0A192F] font-semibold border-r border-[#E5E5E5] last:border-none">
-                      {formatVal(v)}
+              {activeSpecs.rows.map((row, idx) => {
+                const rowBg = idx % 2 === 0 ? 'bg-[#FFFFFF]' : 'bg-[#FAFAFA]'
+                return (
+                  <tr key={row.name} className={rowBg}>
+                    <td className={`sticky left-0 z-10 ${rowBg} py-3.5 px-4 font-medium text-[#0A192F] whitespace-nowrap border-r border-[#E5E5E5]`}>
+                      {row.name}
                     </td>
-                  ))}
-                  <td className="py-3.5 px-3 text-center font-mono text-[11px] text-[#666666]">
-                    {formatVal(row.tolerance)}
-                  </td>
-                </tr>
-              ))}
+                    {row.values.map((v, i) => (
+                      <td key={i} className="py-3.5 px-3.5 text-center font-mono text-[#0A192F] font-semibold whitespace-nowrap border-r border-[#E5E5E5] last:border-none">
+                        {formatVal(v)}
+                      </td>
+                    ))}
+                    <td className="py-3.5 px-3 text-center font-mono text-[11px] text-[#666666] whitespace-nowrap">
+                      {formatVal(row.tolerance)}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
 
         {/* Editorial Measuring Guidance */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 rounded-lg bg-[#F9F9F9] border border-[#E5E5E5] space-y-1">
             <span className="font-semibold text-xs text-[#0A192F] flex items-center gap-1.5">
               <span className="w-4 h-4 rounded-full bg-[#0A192F] text-white text-[10px] flex items-center justify-center font-mono">1</span>
@@ -212,7 +220,7 @@ export function SizeGuideModal({ open, onOpenChange, initialCategory = 'hoodies'
               Chest Width (Laid Flat)
             </span>
             <p className="text-[11px] text-[#666666] leading-relaxed">
-              Measured 1" below the armhole across the front chest from side seam to side seam.
+              Measured 1&quot; below the armhole across the front chest from side seam to side seam.
             </p>
           </div>
 

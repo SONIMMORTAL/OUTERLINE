@@ -89,13 +89,13 @@ export function HeroSection() {
         </motion.h1>
         
         {/* CTA Link */}
-        <motion.div variants={item} className="pt-2">
+        <motion.div variants={item} className="pt-4">
           <Link
             href="/collections/all"
-            className="inline-flex items-center gap-3 font-condensed font-semibold text-xs sm:text-sm uppercase tracking-[0.25em] text-[#FAF6EE] hover:text-white transition-all group pb-1.5 border-b border-[#FAF6EE]/50 hover:border-[#FAF6EE] w-fit"
+            className="inline-flex items-center gap-3 w-fit bg-[#FAF6EE] text-[#0A192F] px-7 sm:px-9 py-3.5 sm:py-4 font-condensed font-bold text-xs sm:text-sm uppercase tracking-[0.22em] shadow-[0_10px_30px_rgba(0,0,0,0.45)] hover:bg-white transition-colors group focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FAF6EE]"
           >
             <span>SHOP THE COLLECTION</span>
-            <span className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
+            <span aria-hidden="true" className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
           </Link>
         </motion.div>
       </motion.div>

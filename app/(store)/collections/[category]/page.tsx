@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import ProductCard from '@/components/store/ProductCard'
 
-import { mockProducts, collections, getProductsByCollection } from '@/lib/mock-data'
+import { collections, type Collection, type Product } from '@/lib/mock-data'
+import { getCatalogProducts, filterProductsByCollection } from '@/lib/catalog'
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
@@ -10,7 +10,8 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
     ? 'Been Brooklyn Baller'
     : category.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
   return {
-    title: `${formattedTitle} | OUTERLINE`,
+    // The root layout's title template appends "| OUTERLINE"
+    title: formattedTitle,
     description: `Shop our latest ${formattedTitle} collection.`
   }
 }
@@ -24,48 +25,36 @@ const VALID_CATEGORIES = [
 export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
   const slug = category.toLowerCase()
-  
+
   if (!VALID_CATEGORIES.includes(slug)) {
     notFound()
   }
 
-  const supabase = await createClient()
-  
-  let products: any[] = []
-  
-  try {
-    let query = supabase.from('products').select('*')
-    if (slug !== 'all' && slug !== 'hoodies' && slug !== 'tees') {
-      query = query.eq('collection_slug', slug)
-    } else if (slug === 'hoodies' || slug === 'tees') {
-      query = query.eq('category', slug)
-    }
-    const { data } = await query.order('created_at', { ascending: false })
-    if (data && data.length > 0) products = data
-  } catch (err) {
-    // schema not created yet
-  }
+  const products = filterProductsByCollection(await getCatalogProducts(), slug)
 
-  if (!products || products.length === 0) {
-    if (slug === 'all') {
-      products = mockProducts
-    } else if (slug === 'hoodies' || slug === 'tees') {
-      products = mockProducts.filter(p => p.category === slug)
-    } else {
-      products = getProductsByCollection ? getProductsByCollection(slug) : mockProducts.filter(p => p.collection_slug === slug)
-    }
-  }
-
-  const categoryName = slug === 'all' 
-    ? 'All Collections' 
-    : (slug === 'been-brooklyn-baller' || slug === 'baller' || slug === 'baller-merch' || slug === 'grey-baller' 
-        ? 'Been Brooklyn Baller' 
+  const categoryName = slug === 'all'
+    ? 'All Collections'
+    : (slug === 'been-brooklyn-baller' || slug === 'baller' || slug === 'baller-merch' || slug === 'grey-baller'
+        ? 'Been Brooklyn Baller'
         : slug.split('-').join(' '))
 
-  const groupedProducts = slug === 'all' && collections ? collections.map(c => ({
-    collection: c,
-    products: products.filter(p => p.collection_slug === c.slug)
-  })).filter(g => g.products.length > 0) : []
+  // On "all", group by collection; anything published outside the named collections lands in a final group.
+  const groupedProducts: { collection: Collection; products: Product[] }[] = []
+  if (slug === 'all') {
+    const grouped = new Set<string>()
+    for (const collection of collections) {
+      const items = filterProductsByCollection(products, collection.slug).filter(p => !grouped.has(p.slug))
+      items.forEach(p => grouped.add(p.slug))
+      if (items.length > 0) groupedProducts.push({ collection, products: items })
+    }
+    const ungrouped = products.filter(p => !grouped.has(p.slug))
+    if (ungrouped.length > 0) {
+      groupedProducts.push({
+        collection: { name: 'More From Outerline', slug: 'more', description: 'New arrivals from across the Outerline line.', image: '' },
+        products: ungrouped,
+      })
+    }
+  }
 
   return (
     <div className="w-full flex flex-col pt-28 sm:pt-32 md:pt-36 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-screen">
@@ -79,7 +68,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           {categoryName}
         </h1>
         <p className="text-[#666666] text-xs font-mono tracking-[0.15em] uppercase">
-          {products?.length || 0} {products?.length === 1 ? 'Garment' : 'Garments'} Available
+          {products.length} {products.length === 1 ? 'Garment' : 'Garments'} Available
         </p>
       </div>
 
@@ -101,7 +90,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
             </div>
           ))}
         </div>
-      ) : products && products.length > 0 ? (
+      ) : products.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 lg:gap-x-8">
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />

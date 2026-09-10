@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 
 export const metadata = {
-  title: 'Terms of Use | Outerline NYC',
-  description: 'Terms of Use for Outerline NYC operated by Ensink Inc.',
+  title: 'Terms of Use',
+  description: 'Terms of Use for the outerlineusa.com website, dba Ensink LLC.',
 }
 
 export default function TermsOfUsePage() {
@@ -25,19 +25,22 @@ export default function TermsOfUsePage() {
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#0A192F]">
             TERMS OF USE
           </h1>
+          <p className="text-sm sm:text-base font-mono tracking-wide text-[#0A192F] font-semibold">
+            outerlineusa.com website dba Ensink LLC
+          </p>
           <p className="text-xs font-mono uppercase tracking-widest text-[#666666]">
-            Effective Date: September 6, 2026 • Ensink Inc, dba Outerline
+            Effective Date: September 6, 2026
           </p>
         </div>
 
         {/* Content */}
         <div className="prose prose-slate max-w-none text-[#333333] space-y-8 leading-relaxed text-sm">
           <p className="font-medium text-base text-[#0A192F]">
-            Please read these Terms of Use (&ldquo;Terms&rdquo;, &ldquo;Terms of Use&rdquo;) carefully before using the Outerline website (the &ldquo;Service&rdquo;) operated by Ensink Inc (&ldquo;us&rdquo;, &ldquo;we&rdquo;, or &ldquo;our&rdquo;).
+            Please read these Terms of Use (&ldquo;Terms&rdquo;, &ldquo;Terms of Use&rdquo;) carefully before using the outerlineusa.com website (the &ldquo;Service&rdquo;) operated by Ensink LLC (&ldquo;us&rdquo;, &ldquo;we&rdquo;, or &ldquo;our&rdquo;).
           </p>
 
           <p>
-            Outerline is a dba under Ensink Inc.
+            The outerlineusa.com website and the Outerline brand are a dba of Ensink LLC.
           </p>
 
           <p>
@@ -71,6 +74,23 @@ export default function TermsOfUsePage() {
 
           <section className="space-y-4 pt-4 border-t border-[#E5E5E5]">
             <h2 className="font-serif text-xl font-bold text-[#0A192F] uppercase tracking-wide">
+              Text Message (SMS) Program
+            </h2>
+            <p>
+              If you opt in to Outerline text messages, you agree to receive recurring automated marketing messages (such as drop alerts, offers, and cart reminders) from Outerline, operated by Ensink LLC, at the mobile number you provide. Consent is not a condition of any purchase.
+            </p>
+            <p>
+              Message frequency varies. Message and data rates may apply. Reply STOP to cancel at any time, or reply HELP for help. You can also contact{' '}
+              <a href="mailto:Support@outerlineusa.com" className="font-mono text-[#0A192F] font-semibold underline">
+                Support@outerlineusa.com
+              </a>
+              . Carriers are not liable for delayed or undelivered messages. Your mobile number is handled as described in our{' '}
+              <Link href="/privacy" className="text-[#0A192F] font-semibold underline">Privacy Policy</Link>.
+            </p>
+          </section>
+
+          <section className="space-y-4 pt-4 border-t border-[#E5E5E5]">
+            <h2 className="font-serif text-xl font-bold text-[#0A192F] uppercase tracking-wide">
               Availability, Errors, and Inaccuracies
             </h2>
             <p>
@@ -86,7 +106,7 @@ export default function TermsOfUsePage() {
               Intellectual Property
             </h2>
             <p>
-              The Service and its original content, features, and functionality are and will remain the exclusive property of Ensink Inc, dba Outerline and its licensors. The Service is protected by copyright, trademark, and other laws of both the United States and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Ensink Inc.
+              The Service and its original content, features, and functionality are and will remain the exclusive property of Ensink LLC, dba Outerline and its licensors. The Service is protected by copyright, trademark, and other laws of both the United States and foreign countries. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Ensink LLC.
             </p>
           </section>
 
@@ -95,10 +115,10 @@ export default function TermsOfUsePage() {
               Links To Other Web Sites
             </h2>
             <p>
-              Our Service may contain links to third-party web sites or services that are not owned or controlled by Ensink Inc.
+              Our Service may contain links to third-party web sites or services that are not owned or controlled by Ensink LLC.
             </p>
             <p>
-              Ensink Inc has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party web sites or services. You further acknowledge and agree that Ensink Inc shall not be responsible or liable, directly or indirectly, for any damage or loss caused or alleged to be caused by or in connection with use of or reliance on any such content, goods or services available on or through any such web sites or services.
+              Ensink LLC has no control over, and assumes no responsibility for, the content, privacy policies, or practices of any third-party web sites or services. You further acknowledge and agree that Ensink LLC shall not be responsible or liable, directly or indirectly, for any damage or loss caused or alleged to be caused by or in connection with use of or reliance on any such content, goods or services available on or through any such web sites or services.
             </p>
             <p>
               We strongly advise you to read the terms and conditions and privacy policies of any third-party web sites or services that you visit.

@@ -1,40 +1,39 @@
 'use client'
 
-import React, { useState } from 'react'
-import Image from 'next/image'
+import React, { useRef, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'
-import { 
-  PlusCircle, 
-  ChevronDown, 
-  ChevronRight, 
-  Search, 
-  Trash2, 
-  Edit3, 
-  Package, 
-  Sparkles, 
-  Check, 
-  Layers,
-  Image as ImageIcon
+import {
+  PlusCircle,
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Trash2,
+  Upload,
+  Loader2
 } from 'lucide-react'
-import { 
-  createProduct, 
-  updateProductStatus, 
+import {
+  createProduct,
+  updateProductStatus,
   updateVariantStock,
-  deleteProduct 
+  deleteProduct
 } from './actions'
+import { createClient as createBrowserSupabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+
+// Must match the size CHECK constraint on product_variants in supabase/migrations/001_init.sql
+const VARIANT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'OS']
+const STOREFRONT_COLLECTIONS = ['So New York', 'Been Brooklyn', 'Been Brooklyn Baller']
 
 export function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
   const [products, setProducts] = useState(initialProducts)
@@ -54,8 +53,11 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
   const [newComparePrice, setNewComparePrice] = useState('')
   const [newDescription, setNewDescription] = useState('')
   const [newEditorialStory, setNewEditorialStory] = useState('')
-  const [newImages, setNewImages] = useState<string[]>(['/blk_so_ny_wht_tee/blk_so_ny_wht_tee/so_ny_wht_tee.jpg'])
+  const [newImages, setNewImages] = useState<string[]>([])
   const [newImageUrlInput, setNewImageUrlInput] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isActive, setIsActive] = useState(true)
   const [isFeatured, setIsFeatured] = useState(true)
 
@@ -82,6 +84,43 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
     if (!newImageUrlInput.trim()) return
     setNewImages([...newImages, newImageUrlInput.trim()])
     setNewImageUrlInput('')
+  }
+
+  // Each file gets a signed upload URL from our API, then goes straight from the browser to Supabase Storage.
+  const handleImageFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0 || isUploading) return
+    setIsUploading(true)
+
+    const supabase = createBrowserSupabase()
+    const uploaded: string[] = []
+
+    for (const file of Array.from(files)) {
+      try {
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size })
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data.error || 'Upload failed')
+
+        const { error } = await supabase.storage
+          .from(data.bucket)
+          .uploadToSignedUrl(data.path, data.token, file, { contentType: file.type })
+        if (error) throw error
+
+        uploaded.push(data.publicUrl)
+      } catch (err: any) {
+        toast.error(`${file.name}: ${err?.message || 'Upload failed'}`)
+      }
+    }
+
+    if (uploaded.length > 0) {
+      setNewImages(prev => [...prev, ...uploaded])
+      toast.success(`Uploaded ${uploaded.length} photo${uploaded.length === 1 ? '' : 's'}`)
+    }
+    setIsUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleRemoveImage = (index: number) => {
@@ -111,6 +150,14 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
       toast.error('Please enter a product title and price.')
       return
     }
+    if (isUploading) {
+      toast.error('Wait for the photo upload to finish.')
+      return
+    }
+    if (newImages.length === 0) {
+      toast.error('Add at least one product photo.')
+      return
+    }
 
     setIsSubmitting(true)
     const numericPrice = parseFloat(newPrice)
@@ -125,27 +172,24 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
       compare_at_price: numericCompare,
       description: newDescription || 'Crafted with premium materials and signature NYC streetwear tailoring.',
       editorial_story: newEditorialStory || 'Forged in Brooklyn. Defined & Unconfined.',
-      images: newImages.length > 0 ? newImages : ['/placeholder.jpg'],
+      images: newImages,
       is_drop_active: isActive,
       is_featured: isFeatured,
       variants: variantsList
     }
 
     try {
-      await createProduct(productPayload)
-      
-      // Update local state for immediate client feedback
-      const createdItem = {
-        id: `mock-${Date.now()}`,
-        ...productPayload,
-        product_variants: variantsList.map((v, i) => ({
-          id: `v-${Date.now()}-${i}`,
-          ...v
-        }))
+      const result = await createProduct(productPayload)
+      if (!result.success) {
+        toast.error(result.error || 'Failed to create product.')
       }
+      if (!result.data) return
 
-      setProducts([createdItem, ...products])
-      toast.success(`Successfully added "${newTitle}" to merchandise!`)
+      const saved = result.data as any
+      setProducts([{ ...productPayload, ...saved, product_variants: saved.product_variants ?? [] }, ...products])
+      if (!result.success) return
+
+      toast.success(`Published "${newTitle}" to the store.`)
       setIsModalOpen(false)
 
       // Reset form
@@ -155,7 +199,8 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
       setNewComparePrice('')
       setNewDescription('')
       setNewEditorialStory('')
-    } catch (err) {
+      setNewImages([])
+    } catch {
       toast.error('Failed to create product.')
     } finally {
       setIsSubmitting(false)
@@ -169,8 +214,12 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
   const handleToggleStatus = async (id: string, currentActive: boolean, currentFeatured: boolean, type: 'active' | 'featured') => {
     const newActive = type === 'active' ? !currentActive : currentActive
     const newFeatured = type === 'featured' ? !currentFeatured : currentFeatured
-    
-    await updateProductStatus(id, newActive, newFeatured)
+
+    const result = await updateProductStatus(id, newActive, newFeatured)
+    if (!result.success) {
+      toast.error(result.error || 'Could not update the product.')
+      return
+    }
     setProducts(products.map(p => p.id === id ? { ...p, is_drop_active: newActive, is_featured: newFeatured } : p))
     toast.success(`Updated ${type === 'active' ? 'drop status' : 'featured status'}`)
   }
@@ -178,13 +227,17 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
   const handleStockUpdate = async (variantId: string, productId: string) => {
     const val = parseInt(stockInput[variantId])
     if (isNaN(val)) return
-    await updateVariantStock(variantId, val)
-    
+    const result = await updateVariantStock(variantId, val)
+    if (!result.success) {
+      toast.error(result.error || 'Could not update stock.')
+      return
+    }
+
     setProducts(products.map(p => {
       if (p.id === productId) {
         return {
           ...p,
-          product_variants: (p.product_variants || []).map((v: any) => 
+          product_variants: (p.product_variants || []).map((v: any) =>
             v.id === variantId ? { ...v, inventory_quantity: val } : v
           )
         }
@@ -196,16 +249,20 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to delete "${title}"?`)) return
-    await deleteProduct(id)
+    const result = await deleteProduct(id)
+    if (!result.success) {
+      toast.error(result.error || `Could not delete "${title}".`)
+      return
+    }
     setProducts(products.filter(p => p.id !== id))
     toast.success(`Removed "${title}"`)
   }
 
   // Filter products by search and collection
   const filteredProducts = products.filter(p => {
-    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (p.collection && p.collection.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCollection = collectionFilter === 'all' || 
+    const matchesCollection = collectionFilter === 'all' ||
                              (p.collection_slug === collectionFilter || p.collection?.toLowerCase() === collectionFilter.toLowerCase())
     return matchesSearch && matchesCollection
   })
@@ -224,7 +281,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
         </div>
 
         {/* Upload Merchandise Modal Trigger */}
-        <Button 
+        <Button
           onClick={() => setIsModalOpen(true)}
           className="bg-[#0A192F] text-[#FFFFFF] hover:bg-[#000000] gap-2 font-serif tracking-widest text-xs uppercase px-5 py-2.5"
         >
@@ -234,7 +291,8 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
 
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FFFFFF] text-[#0A192F] border-[#E5E5E5]">
+          {/* The base dialog caps width at sm:max-w-sm, so the width must be overridden at the same breakpoint. */}
+          <DialogContent className="w-[calc(100%-2rem)] max-w-3xl sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FFFFFF] text-[#0A192F] border-[#E5E5E5]">
             <DialogHeader>
               <DialogTitle className="font-serif text-2xl tracking-wide text-[#0A192F]">
                 ADD NEW MERCHANDISE
@@ -297,10 +355,9 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                       onChange={(e) => setNewCollection(e.target.value)}
                       className="w-full h-9 rounded-md border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-1 text-xs text-[#0A192F]"
                     >
-                      <option value="So New York">So New York</option>
-                      <option value="Been Brooklyn">Been Brooklyn</option>
-                      <option value="Grey Baller">Grey Baller</option>
-                      <option value="Brooklyn Heritage">Brooklyn Heritage</option>
+                      {STOREFRONT_COLLECTIONS.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -363,40 +420,75 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
               {/* Section 3: Product Photography */}
               <div className="space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#0A192F] border-b border-[#E5E5E5] pb-1">
-                  3. Garment Photography & Media
+                  3. Garment Photography & Media *
                 </h3>
+
+                <label
+                  htmlFor="product-image-upload"
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageFiles(e.dataTransfer.files) }}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+                    isUploading ? 'cursor-wait' : 'cursor-pointer'
+                  } ${
+                    isDragging ? 'border-[#0A192F] bg-[#F3F3F3]' : 'border-[#E5E5E5] bg-[#FAFAFA] hover:border-[#0A192F]/50'
+                  }`}
+                >
+                  {isUploading
+                    ? <Loader2 className="w-5 h-5 animate-spin text-[#0A192F]" />
+                    : <Upload className="w-5 h-5 text-[#0A192F]" />}
+                  <span className="text-xs font-semibold text-[#0A192F]">
+                    {isUploading ? 'Uploading photos…' : 'Click to upload or drag photos here'}
+                  </span>
+                  <span className="text-[10px] text-[#666666]">
+                    JPG, PNG, WebP, or AVIF · up to 15 MB each · the first photo is the cover
+                  </span>
+                  <input
+                    ref={fileInputRef}
+                    id="product-image-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    multiple
+                    disabled={isUploading}
+                    onChange={(e) => handleImageFiles(e.target.files)}
+                    className="sr-only"
+                  />
+                </label>
 
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter image path or URL (e.g. /blk_so_ny_wht_tee/blk_so_ny_wht_tee/so_ny_wht_tee.jpg)"
+                    placeholder="Or paste an image URL or /public path"
                     value={newImageUrlInput}
                     onChange={(e) => setNewImageUrlInput(e.target.value)}
                     className="border-[#E5E5E5] bg-[#FAFAFA] text-xs"
                   />
                   <Button type="button" onClick={handleAddImage} variant="outline" className="border-[#E5E5E5] text-xs">
-                    Add Image
+                    Add URL
                   </Button>
                 </div>
 
-                <div className="flex flex-wrap gap-3 pt-2">
-                  {newImages.map((img, idx) => (
-                    <div key={idx} className="relative w-20 h-24 rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-hidden group">
-                      <img src={img} alt="Product preview" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(idx)}
-                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                      {idx === 0 && (
-                        <span className="absolute bottom-1 left-1 bg-[#0A192F] text-white text-[8px] px-1 py-0.5 rounded font-mono">
-                          Cover
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                {newImages.length > 0 && (
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    {newImages.map((img, idx) => (
+                      <div key={`${img}-${idx}`} className="relative w-20 h-24 rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-hidden group">
+                        <img src={img} alt="Product preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          aria-label="Remove photo"
+                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                        {idx === 0 && (
+                          <span className="absolute bottom-1 left-1 bg-[#0A192F] text-white text-[8px] px-1 py-0.5 rounded font-mono">
+                            Cover
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Section 4: Variants & Stock */}
@@ -410,7 +502,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                   </Button>
                 </div>
 
-                <div className="rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-hidden">
+                <div className="rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-[#F3F3F3] border-b border-[#E5E5E5]">
                       <tr>
@@ -425,11 +517,15 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                       {variantsList.map((v, idx) => (
                         <tr key={idx} className="border-b border-[#E5E5E5] last:border-none">
                           <td className="p-2">
-                            <Input
+                            <select
                               value={v.size}
                               onChange={(e) => handleVariantChange(idx, 'size', e.target.value)}
-                              className="h-7 w-20 border-[#E5E5E5] bg-white text-xs"
-                            />
+                              className="h-7 w-20 rounded-md border border-[#E5E5E5] bg-white px-2 text-xs"
+                            >
+                              {VARIANT_SIZES.map((size) => (
+                                <option key={size} value={size}>{size}</option>
+                              ))}
+                            </select>
                           </td>
                           <td className="p-2">
                             <Input
@@ -448,6 +544,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                           <td className="p-2">
                             <Input
                               type="number"
+                              min={0}
                               value={v.inventory_quantity}
                               onChange={(e) => handleVariantChange(idx, 'inventory_quantity', parseInt(e.target.value) || 0)}
                               className="h-7 w-20 border-[#E5E5E5] bg-white text-xs font-mono"
@@ -457,6 +554,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                             <button
                               type="button"
                               onClick={() => handleRemoveVariantRow(idx)}
+                              aria-label="Remove variant"
                               className="text-red-500 hover:text-red-700"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -467,10 +565,11 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                     </tbody>
                   </table>
                 </div>
+                <p className="text-[10px] text-[#666666]">SKUs must be unique across the whole store.</p>
               </div>
 
               {/* Section 5: Visibility Controls */}
-              <div className="flex items-center gap-6 p-4 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
+              <div className="flex flex-wrap items-center gap-6 p-4 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
                 <label className="flex items-center gap-2 text-xs font-medium text-[#0A192F] cursor-pointer">
                   <input
                     type="checkbox"
@@ -496,7 +595,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-[#E5E5E5] text-xs">
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-[#0A192F] text-white hover:bg-black text-xs font-serif tracking-wider uppercase">
+                <Button type="submit" disabled={isSubmitting || isUploading} className="bg-[#0A192F] text-white hover:bg-black text-xs font-serif tracking-wider uppercase">
                   {isSubmitting ? 'Saving Merchandise...' : 'Publish Merchandise'}
                 </Button>
               </DialogFooter>
@@ -519,7 +618,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
           <span className="text-xs text-[#666666] whitespace-nowrap">Filter:</span>
-          {['all', 'So New York', 'Been Brooklyn', 'Grey Baller'].map((coll) => (
+          {['all', ...STOREFRONT_COLLECTIONS].map((coll) => (
             <button
               key={coll}
               onClick={() => setCollectionFilter(coll)}
@@ -555,16 +654,16 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
             {filteredProducts.map((product) => {
               const isExpanded = expandedRows[product.id]
               const totalStock = product.product_variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0
-              const mainImg = product.images?.[0] || '/placeholder.jpg'
+              const mainImg = product.images?.[0] || '/OUTERLINE LOGO.png'
 
               return (
                 <React.Fragment key={product.id}>
                   <TableRow className={`border-b border-[#E5E5E5] hover:bg-[#F9F9F9] transition-colors ${isExpanded ? 'bg-[#FAFAFA]' : ''}`}>
                     <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0 text-[#666666] hover:text-[#0A192F]" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-[#666666] hover:text-[#0A192F]"
                         onClick={() => toggleExpand(product.id)}
                       >
                         {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -614,11 +713,11 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
                     <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={`text-[9px] uppercase tracking-widest ${
-                            product.is_drop_active || product.active 
-                              ? 'bg-green-500/10 text-green-600 border-green-500/20' 
+                            product.is_drop_active || product.active
+                              ? 'bg-green-500/10 text-green-600 border-green-500/20'
                               : 'bg-[#E5E5E5] text-[#666666]'
                           }`}
                         >
@@ -634,35 +733,35 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-7 text-[11px] border-[#E5E5E5] text-[#666666] hover:text-[#0A192F]" 
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] border-[#E5E5E5] text-[#666666] hover:text-[#0A192F]"
                           onClick={() => handleToggleStatus(
-                            product.id, 
-                            product.is_drop_active ?? product.active ?? true, 
-                            product.is_featured ?? product.featured ?? false, 
+                            product.id,
+                            product.is_drop_active ?? product.active ?? true,
+                            product.is_featured ?? product.featured ?? false,
                             'active'
                           )}
                         >
                           {product.is_drop_active || product.active ? 'Hide' : 'Publish'}
                         </Button>
 
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="h-7 text-[11px] border-[#E5E5E5] text-[#666666] hover:text-[#0A192F]" 
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] border-[#E5E5E5] text-[#666666] hover:text-[#0A192F]"
                           onClick={() => handleToggleStatus(
-                            product.id, 
-                            product.is_drop_active ?? product.active ?? true, 
-                            product.is_featured ?? product.featured ?? false, 
+                            product.id,
+                            product.is_drop_active ?? product.active ?? true,
+                            product.is_featured ?? product.featured ?? false,
                             'featured'
                           )}
                         >
                           {product.is_featured || product.featured ? 'Unfeature' : 'Feature'}
                         </Button>
 
-                        <button 
+                        <button
                           onClick={() => handleDelete(product.id, product.title)}
                           className="p-1.5 text-[#666666] hover:text-red-600 transition-colors"
                           title="Delete merchandise"

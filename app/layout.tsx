@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://outerline.nyc'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "OUTERLINE — Defined & Unconfined",
     template: "%s | OUTERLINE",
@@ -20,12 +21,12 @@ export const metadata: Metadata = {
     "tees",
     "editorial fashion",
   ],
-  authors: [{ name: "Outerline NYC" }],
-  creator: "Outerline NYC",
+  authors: [{ name: "Outerline USA" }],
+  creator: "Outerline USA",
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://outerline.nyc",
+    url: SITE_URL,
     siteName: "OUTERLINE",
     title: "OUTERLINE — Defined & Unconfined",
     description:

@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 
+// `short` is shown on small screens so each message stays on a single line.
 const ANNOUNCEMENTS = [
-  { text: 'FREE DOMESTIC SHIPPING ON ALL ORDERS OVER $100', link: '/collections/all' },
-  { text: "USE CODE 'THANK YOU' FOR 15% OFF AT CHECKOUT", link: '/collections/all' },
-  { text: 'LIMITED STREETWEAR RELEASE • NYC FIVE BOROUGHS HERITAGE', link: '/collections/all' },
+  { text: 'FREE DOMESTIC SHIPPING ON ALL ORDERS OVER $100', short: 'FREE SHIPPING OVER $100', link: '/policies/shipping' },
+  { text: "USE CODE 'THANK YOU' FOR 15% OFF AT CHECKOUT", short: "15% OFF • CODE 'THANK YOU'", link: '/collections/all' },
+  { text: 'LIMITED STREETWEAR RELEASE • NYC FIVE BOROUGHS HERITAGE', short: 'LIMITED NYC STREETWEAR RELEASE', link: '/collections/all' },
 ]
 
 export function TopAnnouncementBar() {
@@ -32,15 +33,16 @@ export function TopAnnouncementBar() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="flex items-center justify-center gap-2 text-center"
+          className="flex min-w-0 max-w-full items-center justify-center gap-2 text-center"
         >
           <Link
             href={current.link}
-            className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono tracking-[0.2em] uppercase text-white/90 hover:text-white transition-colors group font-medium"
+            className="flex min-w-0 items-center gap-1.5 whitespace-nowrap text-[10px] sm:text-[11px] font-mono tracking-[0.12em] sm:tracking-[0.2em] uppercase text-white/90 hover:text-white transition-colors group font-medium"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
-            <span>{current.text}</span>
-            <ChevronRight className="w-3 h-3 text-white/50 group-hover:translate-x-0.5 transition-transform" />
+            <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-400 inline-block animate-pulse" />
+            <span className="truncate sm:hidden">{current.short}</span>
+            <span className="hidden truncate sm:inline">{current.text}</span>
+            <ChevronRight className="w-3 h-3 shrink-0 text-white/50 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </motion.div>
       </AnimatePresence>

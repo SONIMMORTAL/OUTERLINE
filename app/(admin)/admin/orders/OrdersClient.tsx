@@ -295,7 +295,7 @@ export function OrdersClient({ initialOrders }: { initialOrders: any[] }) {
 
       {/* Order Detail Modal */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="max-w-2xl bg-[#FFFFFF] text-[#0A192F] border-[#E5E5E5]">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-2xl sm:max-w-2xl bg-[#FFFFFF] text-[#0A192F] border-[#E5E5E5]">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl tracking-wide flex items-center justify-between">
               <span>ORDER #{selectedOrder?.order_number || selectedOrder?.id?.slice(0, 8)}</span>

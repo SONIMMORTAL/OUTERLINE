@@ -1,49 +1,28 @@
-import fs from 'fs'
-import path from 'path'
 import { CountdownConfig, DEFAULT_COUNTDOWN } from '@/lib/types/countdown'
+import { readConfig, writeConfig } from '@/lib/site-config-store'
 
 export type { CountdownConfig }
 export { DEFAULT_COUNTDOWN }
 
-const dataFilePath = path.join(process.cwd(), 'data', 'countdown.json')
+const TEXT_FIELDS = ['badge', 'title', 'message', 'targetDate', 'placeholder_text', 'button_text'] as const
 
-export function getLocalCountdown(): CountdownConfig {
-  try {
-    const dir = path.dirname(dataFilePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-
-    if (!fs.existsSync(dataFilePath)) {
-      saveCountdown(DEFAULT_COUNTDOWN)
-      return DEFAULT_COUNTDOWN
-    }
-
-    const raw = fs.readFileSync(dataFilePath, 'utf-8')
-    const config = JSON.parse(raw)
-    return { ...DEFAULT_COUNTDOWN, ...config }
-  } catch {
-    return DEFAULT_COUNTDOWN
-  }
+export async function getCountdown(): Promise<CountdownConfig> {
+  const stored = await readConfig<Partial<CountdownConfig>>('countdown')
+  return { ...DEFAULT_COUNTDOWN, ...(stored ?? {}) }
 }
 
-export function saveCountdown(config: Partial<CountdownConfig>): CountdownConfig {
-  try {
-    const dir = path.dirname(dataFilePath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
+// Accepts a partial update from the admin form; unknown or mistyped fields are ignored.
+export async function saveCountdown(input: Record<string, unknown>): Promise<CountdownConfig> {
+  const updated: CountdownConfig = { ...(await getCountdown()), updated_at: new Date().toISOString() }
 
-    const current = getLocalCountdown()
-    const updated: CountdownConfig = {
-      ...current,
-      ...config,
-      updated_at: new Date().toISOString()
-    }
-
-    fs.writeFileSync(dataFilePath, JSON.stringify(updated, null, 2), 'utf-8')
-    return updated
-  } catch {
-    return { ...DEFAULT_COUNTDOWN, ...config, updated_at: new Date().toISOString() }
+  for (const field of TEXT_FIELDS) {
+    const value = input[field]
+    if (typeof value === 'string') updated[field] = value
   }
+  if (typeof input.is_active === 'boolean') {
+    updated.is_active = input.is_active
+  }
+
+  await writeConfig('countdown', updated)
+  return updated
 }

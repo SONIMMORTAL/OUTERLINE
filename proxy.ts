@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
+import { ADMIN_SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session'
 
 export async function proxy(request: NextRequest) {
   // Update session first
@@ -15,10 +16,9 @@ export async function proxy(request: NextRequest) {
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
   const isLoginPage = request.nextUrl.pathname === '/admin/login'
-  const adminCookie = request.cookies.get('outerline_admin_session')
 
   if (isAdminRoute && !isApiRoute) {
-    let hasAdminSession = !!adminCookie
+    let hasAdminSession = Boolean(await verifySessionToken(request.cookies.get(ADMIN_SESSION_COOKIE)?.value))
 
     // Also check Supabase Auth session if configured
     if (!hasAdminSession && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

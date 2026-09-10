@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
-import { 
-  getLocalDiscounts, 
-  saveDiscount, 
-  deleteDiscount, 
-  toggleDiscountActive 
+import {
+  getLocalDiscounts,
+  saveDiscount,
+  deleteDiscount,
+  toggleDiscountActive
 } from '@/lib/discounts-store'
+import { getAdminSession } from '@/lib/auth/admin'
+
+function unauthorized() {
+  return NextResponse.json({ error: 'Your admin session has expired. Please log in again.' }, { status: 401 })
+}
 
 export async function GET() {
+  if (!(await getAdminSession())) return unauthorized()
   try {
     const discounts = getLocalDiscounts()
     return NextResponse.json({ discounts })
@@ -16,6 +22,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!(await getAdminSession())) return unauthorized()
   try {
     const body = await req.json()
     if (!body.code) {
@@ -37,6 +44,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  if (!(await getAdminSession())) return unauthorized()
   try {
     const body = await req.json()
     if (!body.id) {
@@ -56,6 +64,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!(await getAdminSession())) return unauthorized()
   try {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')

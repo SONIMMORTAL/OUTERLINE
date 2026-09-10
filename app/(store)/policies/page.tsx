@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 export default function PoliciesPage() {
   const policies = [
-    { name: 'Terms of Use', href: '/terms', description: 'Terms of service, purchases, and intellectual property for Ensink Inc dba Outerline.' },
+    { name: 'Terms of Use', href: '/terms', description: 'Terms of service, purchases, SMS program, and intellectual property for outerlineusa.com, dba Ensink LLC.' },
     { name: 'Privacy Policy', href: '/privacy', description: 'Data collection, cookies, Stripe & PayPal processing, and customer privacy rights.' },
     { name: 'Customer Service', href: '/policies/customer-service', description: '24–48 hour response time and official Support@outerlineusa.com communications.' },
     { name: 'Shipping Policy', href: '/policies/shipping', description: 'Free shipping on orders over $100, carriers (USPS, UPS, FedEx, DHL), and 3–7 day delivery.' },

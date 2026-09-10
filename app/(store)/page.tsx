@@ -1,14 +1,20 @@
-import { Suspense } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import ProductCard from '@/components/store/ProductCard'
 import { AnimatedSection } from '@/components/store/AnimatedSection'
 import { HeroSection } from '@/components/store/HeroSection'
 import { DropCountdown } from '@/components/store/DropCountdown'
 
-import { mockProducts, collections } from '@/lib/mock-data'
+import { collections } from '@/lib/mock-data'
+import { getCatalogProducts, filterProductsByCollection } from '@/lib/catalog'
+import { getCountdown } from '@/lib/countdown-store'
+
+// Admin saves revalidate this page right away; the interval covers edits made directly in Supabase.
+export const revalidate = 300
 
 export default async function HomePage() {
+  const [countdown, products] = await Promise.all([getCountdown(), getCatalogProducts()])
+
   const collectionCards = [
     { name: 'Been Brooklyn', slug: 'been-brooklyn', image: '/BEEN BROOKLYN BLACK SWEATER model.png', subtitle: 'Heavyweight Fleece & Borough Pride' },
     { name: 'Been Brooklyn Baller', slug: 'been-brooklyn-baller', image: '/BEEN BROOKLYN BALLER BLK&BLUE .png', subtitle: 'Collegiate Stripes & Animated Mascot' },
@@ -21,7 +27,7 @@ export default async function HomePage() {
       <HeroSection />
 
       {/* Drop Countdown Section */}
-      <DropCountdown />
+      {countdown.is_active && <DropCountdown config={countdown} />}
 
       {/* 2. Shop By Collection */}
       <section className="bg-[#FFFFFF] py-24 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
@@ -37,10 +43,12 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {collectionCards.map((card) => (
                 <Link key={card.slug} href={`/collections/${card.slug}`} className="group block relative aspect-[4/5] overflow-hidden bg-[#F3F3F3] rounded-xl border border-[#E5E5E5]">
-                  <img 
-                    src={card.image} 
-                    alt={card.name} 
-                    className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                  <Image
+                    src={card.image}
+                    alt={card.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent group-hover:from-black/70 transition-colors duration-500" />
                   <div className="absolute inset-0 p-8 flex flex-col justify-end text-white space-y-2">
@@ -60,7 +68,7 @@ export default async function HomePage() {
       <section className="bg-[#F9F9F9] py-24 px-4 sm:px-6 lg:px-8 w-full border-t border-[#E5E5E5]">
         <div className="max-w-7xl mx-auto space-y-24">
           {collections.map((collection, idx) => {
-            const collectionProducts = mockProducts.filter(p => p.collection_slug === collection.slug).slice(0, 4)
+            const collectionProducts = filterProductsByCollection(products, collection.slug).slice(0, 4)
             if (collectionProducts.length === 0) return null
 
             return (
@@ -70,16 +78,16 @@ export default async function HomePage() {
                     <h2 className="font-brand text-3xl md:text-4xl font-bold tracking-[0.12em] text-[#0A192F] uppercase">{collection.name}</h2>
                     <p className="text-[#666666]">{collection.description}</p>
                   </div>
-                  <Link 
+                  <Link
                     href={`/collections/${collection.slug}`}
                     className="text-[#0A192F] text-[10px] uppercase tracking-widest font-medium hover:text-[#0A192F] transition-colors pb-1 border-b border-[#0A192F] hover:border-[#0A192F] w-fit"
                   >
                     VIEW ALL
                   </Link>
                 </div>
-                
-                <div className={collectionProducts.length <= 2 
-                  ? "grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl" 
+
+                <div className={collectionProducts.length <= 2
+                  ? "grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-4xl"
                   : "grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6 lg:gap-x-8"
                 }>
                   {collectionProducts.map((product) => (
@@ -103,7 +111,7 @@ export default async function HomePage() {
               <h2 className="font-serif text-3xl md:text-4xl text-[#0A192F] uppercase">COMMUNITY FITS</h2>
               <p className="text-[#666666]">Real street style, unboxing videos, and verified apparel reviews.</p>
             </div>
-            <Link 
+            <Link
               href="/testimonials"
               className="text-[#0A192F] text-[10px] uppercase tracking-widest font-medium hover:text-[#000000] transition-colors pb-1 border-b border-[#0A192F] w-fit"
             >

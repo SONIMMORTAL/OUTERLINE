@@ -9,7 +9,8 @@ import { mockProducts } from '@/lib/mock-data'
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   return {
-    title: `${slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} | OUTERLINE`,
+    // The root layout's title template appends "| OUTERLINE"
+    title: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
   }
 }
 

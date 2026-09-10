@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { BrandLogo } from '@/components/store/BrandLogo'
 
 export default function Footer() {
   return (
@@ -13,7 +14,7 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="flex flex-col gap-4">
             <Link href="/" className="inline-block">
-              <img src="/OUTERLINE LOGO.png" alt="Outerline Logo" className="h-10 object-contain w-auto" />
+              <BrandLogo className="h-10 object-contain w-auto" />
             </Link>
             <p className="font-serif italic text-[#666666] text-sm">
               Defined &amp; Unconfined
@@ -102,15 +103,20 @@ export default function Footer() {
                   const input = form.elements.namedItem('email') as HTMLInputElement
                   if (!input?.value) return
                   try {
-                    await fetch('/api/mailchimp/subscribe', {
+                    const res = await fetch('/api/mailchimp/subscribe', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email: input.value })
+                      body: JSON.stringify({ email: input.value, source: 'footer' })
                     })
+                    const data = await res.json().catch(() => ({}))
+                    if (!res.ok) {
+                      toast.error(data.error || 'Could not subscribe. Please try again.')
+                      return
+                    }
                     input.value = ''
-                    toast.success('Subscribed! Check your inbox for your 15% discount code.')
+                    toast.success("Subscribed! Use code 'THANK YOU' for 15% off your first order.")
                   } catch {
-                    toast.success('Subscribed! Check your inbox for your 15% discount code.')
+                    toast.error('Network error. Please try again.')
                   }
                 }}
               >

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { ADMIN_SESSION_COOKIE, ADMIN_SESSION_MAX_AGE, createSessionToken } from '@/lib/auth/session'
 
 export async function POST(req: Request) {
   try {
@@ -57,18 +58,14 @@ export async function POST(req: Request) {
       )
     }
 
-    // Set HTTP-Only Session Cookie
+    // Set HTTP-Only signed session cookie
     const cookieStore = await cookies()
-    cookieStore.set('outerline_admin_session', JSON.stringify({
-      user: sessionUser,
-      authenticatedAt: new Date().toISOString(),
-      role: 'admin'
-    }), {
+    cookieStore.set(ADMIN_SESSION_COOKIE, await createSessionToken(sessionUser), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      maxAge: ADMIN_SESSION_MAX_AGE
     })
 
     return NextResponse.json({

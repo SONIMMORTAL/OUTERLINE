@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { ShoppingCart, Check, ChevronLeft, ChevronRight, Ruler } from 'lucide-react'
+import Link from 'next/link'
+import { ShoppingCart, Check, ChevronLeft, ChevronRight, Ruler, Truck, CircleAlert } from 'lucide-react'
 import * as Tabs from '@radix-ui/react-tabs'
 import { useCartStore } from '@/lib/store/cart'
 import { toast } from 'sonner'
 import { SizeGuideModal } from '@/components/store/SizeGuideModal'
+import { DEFECT_CLAIM_WINDOW_DAYS, DELIVERY_ESTIMATE, FREE_SHIPPING_THRESHOLD } from '@/lib/store-policies'
 
 interface ProductDetailClientProps {
   product: any
@@ -625,6 +627,38 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             <ShoppingCart className="w-4 h-4" />
             Add to Cart
           </button>
+
+          {/* Purchase conditions — all sales are final, so these sit right next to the buy button */}
+          <div className="-mt-4 rounded-md border border-[#E5E5E5] bg-[#FAFAFA] p-4 space-y-3 text-xs text-[#333333] leading-relaxed">
+            <div className="flex gap-2.5">
+              <CircleAlert className="w-4 h-4 text-[#0A192F] shrink-0 mt-0.5" aria-hidden="true" />
+              <p>
+                <span className="font-semibold text-[#0A192F]">Final sale.</span>{' '}
+                Returns and exchanges only for defective or incorrectly shipped items, reported within {DEFECT_CLAIM_WINDOW_DAYS} days of delivery. No returns for size or fit, so{' '}
+                <button
+                  type="button"
+                  onClick={() => setSizeGuideOpen(true)}
+                  className="font-semibold text-[#0A192F] underline underline-offset-2 hover:text-black cursor-pointer"
+                >
+                  check the size guide
+                </button>{' '}
+                first.{' '}
+                <Link href="/policies/returns" className="underline underline-offset-2 hover:text-[#0A192F]">
+                  Returns policy
+                </Link>
+              </p>
+            </div>
+            <div className="flex gap-2.5">
+              <Truck className="w-4 h-4 text-[#0A192F] shrink-0 mt-0.5" aria-hidden="true" />
+              <p>
+                <span className="font-semibold text-[#0A192F]">Standard delivery in {DELIVERY_ESTIMATE}.</span>{' '}
+                Free domestic shipping on orders over ${FREE_SHIPPING_THRESHOLD}.{' '}
+                <Link href="/policies/shipping" className="underline underline-offset-2 hover:text-[#0A192F]">
+                  Shipping policy
+                </Link>
+              </p>
+            </div>
+          </div>
 
           {/* Tabs: Specifications & Sizing */}
           <Tabs.Root defaultValue="details" className="w-full pt-8 border-t border-[#E5E5E5]">

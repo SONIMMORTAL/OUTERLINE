@@ -1,9 +1,8 @@
 import Link from 'next/link'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminSession } from '@/lib/auth/admin'
 import { Sidebar } from './Sidebar'
-import { ExternalLink, ShieldCheck } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { AdminLogoutButton } from '@/components/admin/AdminLogoutButton'
 
 export default async function AdminLayout({
@@ -11,24 +10,10 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const adminSessionCookie = cookieStore.get('outerline_admin_session')
-  
-  let userEmail = 'admin@outerline.nyc'
-  let isAuthenticated = false
+  const adminSession = await getAdminSession()
 
-  if (adminSessionCookie) {
-    try {
-      const raw = adminSessionCookie.value.startsWith('%') ? decodeURIComponent(adminSessionCookie.value) : adminSessionCookie.value
-      const parsed = JSON.parse(raw)
-      if (parsed?.user) {
-        userEmail = parsed.user
-        isAuthenticated = true
-      }
-    } catch {
-      isAuthenticated = true
-    }
-  }
+  let userEmail = adminSession?.user || 'admin@outerline.nyc'
+  let isAuthenticated = Boolean(adminSession)
 
   // Also check Supabase Auth session if present
   if (!isAuthenticated && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {

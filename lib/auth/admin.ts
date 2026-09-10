@@ -1,17 +1,10 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { ADMIN_SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session'
 
 export async function getAdminSession() {
   const cookieStore = await cookies()
-  const session = cookieStore.get('outerline_admin_session')
-  if (!session?.value) return null
-  try {
-    const raw = session.value.startsWith('%') ? decodeURIComponent(session.value) : session.value
-    const parsed = JSON.parse(raw)
-    return parsed?.user ? parsed : null
-  } catch {
-    return null
-  }
+  return verifySessionToken(cookieStore.get(ADMIN_SESSION_COOKIE)?.value)
 }
 
 export async function requireAdmin() {
