@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient, getServiceRoleKeyError } from '@/lib/supabase/admin'
 
 // Small JSON settings documents (countdown, etc.).
 // Production runs on Vercel, where the filesystem is read-only, so documents live in a private
@@ -26,7 +26,7 @@ function readLocal<T>(name: string): T | null {
 }
 
 export async function readConfig<T>(name: string): Promise<T | null> {
-  if (hasSupabaseStorage()) {
+  if (hasSupabaseStorage() && !getServiceRoleKeyError()) {
     try {
       const { data, error } = await createAdminClient().storage.from(BUCKET).download(`${name}.json`)
       if (!error && data) return JSON.parse(await data.text()) as T
@@ -46,6 +46,11 @@ export async function writeConfig(name: string, value: unknown): Promise<void> {
     return
   }
 
+  const keyError = getServiceRoleKeyError()
+  if (keyError) {
+    throw new Error(`Could not save ${name} settings: ${keyError}`)
+  }
+
   const storage = createAdminClient().storage
   const upload = () =>
     storage.from(BUCKET).upload(`${name}.json`, new Blob([json], { type: 'application/json' }), {
@@ -56,7 +61,10 @@ export async function writeConfig(name: string, value: unknown): Promise<void> {
 
   let { error } = await upload()
   if (error && /not found/i.test(error.message)) {
-    await storage.createBucket(BUCKET, { public: false })
+    const created = await storage.createBucket(BUCKET, { public: false })
+    if (created.error && !/already exists/i.test(created.error.message)) {
+      throw new Error(`Could not create the "${BUCKET}" storage bucket: ${created.error.message}`)
+    }
     ;({ error } = await upload())
   }
   if (error) {

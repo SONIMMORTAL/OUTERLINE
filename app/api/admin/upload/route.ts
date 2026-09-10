@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminSession } from '@/lib/auth/admin'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient, getServiceRoleKeyError } from '@/lib/supabase/admin'
 
 const BUCKET = 'product-images'
 const MAX_BYTES = 15 * 1024 * 1024
@@ -17,8 +17,9 @@ export async function POST(req: Request) {
   if (!(await getAdminSession())) {
     return NextResponse.json({ error: 'Your admin session has expired. Please log in again.' }, { status: 401 })
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return NextResponse.json({ error: 'Image uploads need SUPABASE_SERVICE_ROLE_KEY on the server.' }, { status: 500 })
+  const keyError = getServiceRoleKeyError()
+  if (keyError) {
+    return NextResponse.json({ error: `Image uploads are not configured: ${keyError}` }, { status: 500 })
   }
 
   const { fileName, contentType, size } = await req.json().catch(() => ({}))
@@ -41,11 +42,14 @@ export async function POST(req: Request) {
   const storage = createAdminClient().storage
   let signed = await storage.from(BUCKET).createSignedUploadUrl(path)
   if (signed.error && /not found/i.test(signed.error.message)) {
-    await storage.createBucket(BUCKET, {
+    const created = await storage.createBucket(BUCKET, {
       public: true,
       fileSizeLimit: MAX_BYTES,
       allowedMimeTypes: Object.keys(EXTENSIONS),
     })
+    if (created.error && !/already exists/i.test(created.error.message)) {
+      return NextResponse.json({ error: `Could not create the "${BUCKET}" storage bucket: ${created.error.message}` }, { status: 500 })
+    }
     signed = await storage.from(BUCKET).createSignedUploadUrl(path)
   }
   if (signed.error || !signed.data) {

@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createAdminClient, getServiceRoleKeyError } from '@/lib/supabase/admin'
 import { getAdminSession } from '@/lib/auth/admin'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -12,8 +12,9 @@ async function getWriteClient() {
   if (!(await getAdminSession())) {
     throw new Error('Your admin session has expired. Please log in again.')
   }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured on the server.')
+  const keyError = getServiceRoleKeyError()
+  if (keyError) {
+    throw new Error(keyError)
   }
   return createAdminClient()
 }
