@@ -1,5 +1,12 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { MAX_QUANTITY_PER_ITEM } from '@/lib/store-policies'
+
+// Keeps a line between 1 and the lower of the per-line limit and the stock seen when it was added.
+// Checkout re-checks live stock on the server.
+function clampQuantity(quantity: number, maxQuantity?: number): number {
+  return Math.max(1, Math.min(quantity, MAX_QUANTITY_PER_ITEM, maxQuantity ?? MAX_QUANTITY_PER_ITEM))
+}
 
 export interface CartItem {
   id: string
@@ -13,6 +20,7 @@ export interface CartItem {
   compareAtPrice?: number
   image: string
   quantity: number
+  maxQuantity?: number
 }
 
 interface CartStore {
@@ -46,7 +54,7 @@ export const useCartStore = create<CartStore>()(
         if (existingItem) {
           set({
             items: currentItems.map((i) =>
-              i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+              i.id === item.id ? { ...i, ...item, quantity: clampQuantity(i.quantity + 1, item.maxQuantity) } : i
             ),
             isOpen: true,
           })
@@ -72,7 +80,7 @@ export const useCartStore = create<CartStore>()(
         
         set({
           items: get().items.map((i) =>
-            i.id === variantId ? { ...i, quantity } : i
+            i.id === variantId ? { ...i, quantity: clampQuantity(quantity, i.maxQuantity) } : i
           ),
         })
       },

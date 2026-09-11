@@ -24,6 +24,7 @@ import { useCartStore } from '@/lib/store/cart'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { calculateTax, US_STATE_TAX_RATES } from '@/lib/taxes'
+import { MAX_QUANTITY_PER_ITEM } from '@/lib/store-policies'
 
 const US_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
@@ -232,7 +233,8 @@ export default function CartDrawer() {
                             </span>
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="p-1 text-[#666666] hover:text-[#0A192F] transition-colors cursor-pointer"
+                              disabled={item.quantity >= Math.min(MAX_QUANTITY_PER_ITEM, item.maxQuantity ?? MAX_QUANTITY_PER_ITEM)}
+                              className="p-1 text-[#666666] hover:text-[#0A192F] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                               aria-label="Increase quantity"
                             >
                               <Plus className="w-3 h-3" />

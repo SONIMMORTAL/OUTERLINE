@@ -1,17 +1,26 @@
 import { NextResponse, after } from 'next/server'
-import { getCatalogProducts } from '@/lib/catalog'
+import { revalidatePath } from 'next/cache'
+import { loadCatalogProducts } from '@/lib/catalog'
 import { calculateOrderTotals } from '@/lib/pricing'
 import { redeemDiscount, releaseDiscount } from '@/lib/discounts-store'
-import { countRecentOrders, createOrder, type NewOrderItem } from '@/lib/orders'
+import {
+  countRecentOrders,
+  createOrder,
+  expireUnpaidOrders,
+  OutOfStockError,
+  type NewOrderItem
+} from '@/lib/orders'
 import { buildPayPalPaymentUrl } from '@/lib/paypal'
-import { sendNewOrderNotifications } from '@/lib/order-notifications'
+import { sendOrderReservedEmail } from '@/lib/order-notifications'
 import { normalizePhone } from '@/lib/phone'
 import { US_STATE_TAX_RATES } from '@/lib/taxes'
+import { findVariant, skuFor } from '@/lib/inventory'
+import { MAX_QUANTITY_PER_ITEM, PAYMENT_HOLD_MINUTES } from '@/lib/store-policies'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ZIP_PATTERN = /^\d{5}(-\d{4})?$/
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_LINE_ITEMS = 25
-const MAX_QUANTITY_PER_ITEM = 10
 const RECENT_ORDER_LIMIT = 3
 const RECENT_ORDER_WINDOW_MINUTES = 15
 
@@ -21,14 +30,11 @@ function text(value: unknown, max: number): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
 }
 
-function skuFor(slug: string, color: string, size: string): string {
-  return `${slug}-${color}-${size}`.toUpperCase().replace(/[^A-Z0-9]+/g, '-')
-}
-
-// Places a pending PayPal order. The browser only says what is in the cart; prices, the discount,
-// shipping, and tax are all computed here.
+// Places a pending PayPal order. The browser only says what is in the cart; prices, stock, the discount,
+// shipping, and tax are all decided here. Stock is reserved until the payment hold expires.
 export async function POST(req: Request) {
   let claimedDiscountId: string | null = null
+  let items: NewOrderItem[] = []
 
   try {
     const body = await req.json().catch(() => null)
@@ -66,8 +72,11 @@ export async function POST(req: Request) {
       )
     }
 
-    const catalog = await getCatalogProducts()
-    const items: NewOrderItem[] = lines.map((line) => {
+    // Release stock held by checkouts that were never paid before checking what is available.
+    await expireUnpaidOrders()
+    const catalog = await loadCatalogProducts()
+
+    items = lines.map((line) => {
       const product = catalog.find((p) => p.id === line.productId) || catalog.find((p) => p.slug === line.slug)
       if (!product) throw new CheckoutError('An item in your cart is no longer available. Please remove it and try again.')
 
@@ -78,16 +87,22 @@ export async function POST(req: Request) {
 
       const size = text(line.size, 10)
       const color = text(line.color, 60)
-      const variants = product.product_variants ?? []
-      if (variants.length > 0 && (!variants.some((v) => v.size === size) || !variants.some((v) => v.color === color))) {
-        throw new CheckoutError(`${product.title} is not available in ${color} / ${size}. Please update your cart.`)
+      const variant = findVariant(product.product_variants ?? [], color, size)
+      if (!variant || !UUID_PATTERN.test(variant.id)) {
+        throw new CheckoutError(`${product.title} in ${color} / ${size} is not available. Please update your cart.`)
+      }
+      if (variant.inventory_quantity < quantity) {
+        throw new CheckoutError(variant.inventory_quantity > 0
+          ? `Only ${variant.inventory_quantity} left of ${product.title} in ${color} / ${size}. Please update your cart.`
+          : `${product.title} in ${color} / ${size} is sold out. Please update your cart.`)
       }
 
       return {
+        variant_id: variant.id,
         product_title: product.title,
         product_slug: product.slug,
         variant_ref: text(line.id, 120) || null,
-        sku: skuFor(product.slug, color, size),
+        sku: variant.sku || skuFor(product.slug, color, size),
         size,
         color,
         quantity,
@@ -122,23 +137,33 @@ export async function POST(req: Request) {
       tax_amount: totals.taxAmount,
       total_amount: totals.total,
       payment_method: 'paypal',
+      payment_expires_at: new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000).toISOString(),
       items,
     })
     claimedDiscountId = null // the saved order now owns the discount use
 
     const paymentUrl = buildPayPalPaymentUrl(order)
-    after(() => sendNewOrderNotifications(order, paymentUrl))
+    after(() => sendOrderReservedEmail(order, paymentUrl))
+    revalidatePath('/') // homepage sold-out badges
 
     return NextResponse.json({
       orderId: order.id,
       orderNumber: order.order_number,
       paymentUrl,
+      paymentExpiresAt: order.payment_expires_at,
       totals,
     })
   } catch (err) {
     if (claimedDiscountId) await releaseDiscount(claimedDiscountId)
     if (err instanceof CheckoutError) {
       return NextResponse.json({ error: err.message }, { status: 400 })
+    }
+    if (err instanceof OutOfStockError) {
+      const item = items.find((i) => i.variant_id === err.variantId)
+      return NextResponse.json(
+        { error: item ? `${item.product_title} in ${item.color} / ${item.size} just sold out. Please update your cart.` : 'An item in your cart just sold out. Please update your cart.' },
+        { status: 409 }
+      )
     }
     console.error('Order creation failed:', err)
     return NextResponse.json(

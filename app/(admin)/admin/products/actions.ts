@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient, getServiceRoleKeyError } from '@/lib/supabase/admin'
+import { mockProducts } from '@/lib/mock-data'
 import { getAdminSession } from '@/lib/auth/admin'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -130,6 +131,10 @@ export async function deleteProduct(productId: string) {
   try {
     assertDatabaseProduct(productId)
     const supabase = await getWriteClient()
+    const { data: target } = await (supabase.from('products') as any).select('slug').eq('id', productId).maybeSingle()
+    if (target && mockProducts.some((p) => p.slug === target.slug)) {
+      return { success: false, error: 'Launch products keep their photo galleries in code, so they can be hidden but not deleted. Use Hide instead.' }
+    }
     await (supabase.from('product_variants') as any).delete().eq('product_id', productId)
     const { error } = await (supabase.from('products') as any).delete().eq('id', productId)
     if (error) return { success: false, error: error.message }
@@ -160,9 +165,12 @@ export async function updateVariantStock(variantId: string, quantity: number) {
   try {
     assertDatabaseProduct(variantId)
     const supabase = await getWriteClient()
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return { success: false, error: 'Stock must be a whole number of 0 or more.' }
+    }
     const { error } = await (supabase.from('product_variants') as any).update({ inventory_quantity: quantity }).eq('id', variantId)
     if (error) return { success: false, error: error.message }
-    revalidatePath('/admin/products')
+    revalidateStorefront()
     return { success: true }
   } catch (err: any) {
     return { success: false, error: err?.message }

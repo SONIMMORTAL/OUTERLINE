@@ -1,6 +1,7 @@
 // Auto-generated mock data
 export interface ProductVariant {
   id: string
+  sku?: string
   size: string
   color: string
   image: string

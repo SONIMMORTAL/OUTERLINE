@@ -1,46 +1,29 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ChevronRight } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
 import { ProductDetailClient } from '@/components/store/ProductDetailClient'
-import { mockProducts } from '@/lib/mock-data'
+import { getCatalogProduct } from '@/lib/catalog'
+
+// Stock and sold-out sizes must be current on every visit.
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  const product = await getCatalogProduct(slug)
   return {
     // The root layout's title template appends "| OUTERLINE"
-    title: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    title: product?.title ?? slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    description: product?.description,
   }
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const supabase = await createClient()
-
-  let product: any = null
-  
-  try {
-    const { data } = await supabase
-      .from('products')
-      .select('*, product_variants(*)')
-      .eq('slug', slug)
-      .single()
-    if (data) product = data
-  } catch (err) {
-    // schema not created
-  }
-
-  if (!product) {
-    product = mockProducts.find(p => p.slug === slug)
-  }
+  const product = await getCatalogProduct(slug)
 
   if (!product) {
     notFound()
   }
-
-  const images = product.images || []
-  const mainImage = images[0]
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 md:pt-36 pb-16">

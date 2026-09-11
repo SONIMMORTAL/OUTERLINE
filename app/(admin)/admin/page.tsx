@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/admin'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 
 import { requireAdmin } from '@/lib/auth/admin'
-import { listOrders, type OrderRecord } from '@/lib/orders'
+import { expireUnpaidOrders, listOrders, type OrderRecord } from '@/lib/orders'
 import { REVENUE_STATUSES } from '@/lib/order-status'
 import { getCountdown } from '@/lib/countdown-store'
 
@@ -31,17 +31,19 @@ export default async function AdminDashboard() {
   let lowStockVariants: any[] = []
 
   try {
+    await expireUnpaidOrders()
     orders = await listOrders(500)
   } catch (err) {
     console.error('Dashboard orders unavailable:', err)
   }
 
   try {
-    const supabase = await createClient()
+    const supabase = createServiceClient()
     const { data: dbLowStock } = await supabase
       .from('product_variants')
       .select('*, products(title)')
       .lt('inventory_quantity', 5)
+      .order('inventory_quantity', { ascending: true })
 
     if (dbLowStock && dbLowStock.length > 0) {
       lowStockVariants = dbLowStock

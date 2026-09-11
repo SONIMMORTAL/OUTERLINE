@@ -6,9 +6,11 @@ import { getAdminSession } from '@/lib/auth/admin'
 import { getOrder, updateOrder, type OrderRecord } from '@/lib/orders'
 import { isOrderStatus } from '@/lib/order-status'
 import { isCarrier } from '@/lib/carriers'
-import { sendShippedEmail, sendVendorPurchaseOrder } from '@/lib/order-notifications'
+import { sendOrderPaidNotifications, sendShippedEmail, sendVendorPurchaseOrder } from '@/lib/order-notifications'
 
 type ActionResult = { success: true; order: OrderRecord } | { success: false; error: string }
+
+const PAID_STATUSES = ['paid', 'processing', 'fulfilled']
 
 async function adminAction(work: () => Promise<OrderRecord>): Promise<ActionResult> {
   try {
@@ -18,20 +20,30 @@ async function adminAction(work: () => Promise<OrderRecord>): Promise<ActionResu
     const order = await work()
     revalidatePath('/admin/orders')
     revalidatePath('/admin')
+    revalidatePath('/')
     return { success: true, order }
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Something went wrong.' }
   }
 }
 
+// Customer emails for manual changes: payment received, and shipped with tracking.
+function notifyCustomer(before: OrderRecord | null, order: OrderRecord) {
+  if (order.status === 'paid' && !PAID_STATUSES.includes(before?.status ?? '')) {
+    after(() => sendOrderPaidNotifications(order, { source: 'admin' }))
+  }
+  if (order.status === 'fulfilled' && before?.status !== 'fulfilled') {
+    after(() => sendShippedEmail(order))
+  }
+}
+
+// Cancelling returns the order's stock and discount use; reopening a cancelled order reserves them again.
 export async function updateOrderStatus(orderId: string, status: string): Promise<ActionResult> {
   return adminAction(async () => {
     if (!isOrderStatus(status)) throw new Error('Unknown order status.')
     const before = await getOrder(orderId)
     const order = await updateOrder(orderId, { status })
-    if (status === 'fulfilled' && before?.status !== 'fulfilled') {
-      after(() => sendShippedEmail(order))
-    }
+    notifyCustomer(before, order)
     return order
   })
 }
@@ -43,20 +55,21 @@ export async function updateOrderTracking(orderId: string, trackingNumber: strin
   }))
 }
 
-// Records the PayPal transaction ID and, for an unpaid order, marks it Paid.
+// For payments PayPal did not report automatically: records the transaction ID and marks the order Paid.
 export async function recordOrderPayment(orderId: string, paymentReference: string): Promise<ActionResult> {
   return adminAction(async () => {
-    const current = await getOrder(orderId)
-    if (!current) throw new Error('Order not found.')
-    return updateOrder(orderId, {
-      payment_reference: paymentReference.trim().slice(0, 100) || null,
-      ...(current.status === 'pending' ? { status: 'paid' as const } : {}),
-    })
+    const before = await getOrder(orderId)
+    if (!before) throw new Error('Order not found.')
+    const reference = paymentReference.trim().slice(0, 100) || null
+    const needsPayment = before.status === 'pending' || before.status === 'cancelled'
+    const order = await updateOrder(orderId, needsPayment ? { status: 'paid', payment_reference: reference } : { payment_reference: reference })
+    notifyCustomer(before, order)
+    return order
   })
 }
 
 export async function updateOrderNotes(orderId: string, notes: string): Promise<ActionResult> {
-  return adminAction(() => updateOrder(orderId, { admin_notes: notes.trim().slice(0, 2000) || null }))
+  return adminAction(() => updateOrder(orderId, { admin_notes: notes.trim().slice(0, 4000) || null }))
 }
 
 export async function notifyVendor(orderId: string): Promise<ActionResult> {

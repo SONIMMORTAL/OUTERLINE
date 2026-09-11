@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { findCustomerOrder } from '@/lib/orders'
+import { expireUnpaidOrders, findCustomerOrder } from '@/lib/orders'
 import { buildPayPalPaymentUrl } from '@/lib/paypal'
 
 // Customers look up one order with the email AND order number from their confirmation.
@@ -14,6 +14,8 @@ export async function POST(req: Request) {
   }
 
   try {
+    // So an unpaid order past its hold shows as cancelled rather than still payable.
+    await expireUnpaidOrders()
     const order = await findCustomerOrder(email, orderNumber)
     if (!order) {
       return NextResponse.json({ order: null })
@@ -36,6 +38,7 @@ export async function POST(req: Request) {
         shipping_city: order.shipping_address?.city ?? null,
         shipping_state: order.shipping_address?.state ?? null,
         payment_url: order.status === 'pending' ? buildPayPalPaymentUrl(order) : null,
+        payment_expires_at: order.status === 'pending' ? order.payment_expires_at : null,
         items: order.order_items.map((item) => ({
           product_title: item.product_title,
           size: item.size,

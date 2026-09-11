@@ -128,7 +128,7 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
           ORDERS & FULFILLMENT
         </h1>
         <p className="text-xs text-[#666666] mt-1">
-          Confirm PayPal payments, send purchase orders to the vendor, and add tracking. New orders arrive as Awaiting Payment.
+          PayPal payments confirm automatically. Unpaid orders release their stock when the hold ends. Send purchase orders to the vendor and add tracking here.
         </p>
       </div>
 
@@ -208,6 +208,11 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
                     <TableCell className="font-medium text-[#0A192F]">
                       <span className="font-bold text-sm block">#{order.order_number}</span>
                       <span className="text-[10px] text-[#666666] font-mono">{new Date(order.created_at).toLocaleDateString()}</span>
+                      {order.status === 'pending' && order.payment_expires_at && (
+                        <span className="text-[10px] text-yellow-700 block">
+                          Hold ends {new Date(order.payment_expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      )}
                     </TableCell>
 
                     <TableCell className="text-[#0A192F] text-xs">
@@ -353,8 +358,10 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
                     </span>
                     <p className="text-[#666666]">
                       {selectedOrder.paid_at
-                        ? `Paid ${new Date(selectedOrder.paid_at).toLocaleString()}`
-                        : 'Not yet paid. Check PayPal for invoice OL-' + selectedOrder.order_number + '.'}
+                        ? `Paid ${new Date(selectedOrder.paid_at).toLocaleString()}${selectedOrder.payment_reference ? ` · PayPal ${selectedOrder.payment_reference}` : ''}`
+                        : selectedOrder.status === 'pending'
+                          ? `Waiting for PayPal (invoice OL-${selectedOrder.order_number}). Confirms automatically${selectedOrder.payment_expires_at ? `; stock is held until ${new Date(selectedOrder.payment_expires_at).toLocaleString()}` : ''}.`
+                          : `Not paid. If PayPal shows invoice OL-${selectedOrder.order_number} as paid, enter its transaction ID to mark it Paid.`}
                     </p>
                     <label className="block text-[10px] uppercase tracking-wider text-[#666666]" htmlFor="payment-reference">
                       PayPal transaction ID
@@ -371,9 +378,9 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
                         size="sm"
                         disabled={busyAction === 'payment'}
                         className="h-8 text-xs bg-[#0A192F] text-white hover:bg-black shrink-0"
-                        onClick={() => runAction('payment', () => recordOrderPayment(selectedOrder.id, paymentDraft), selectedOrder.status === 'pending' ? `Order #${selectedOrder.order_number} marked Paid` : 'Payment reference saved')}
+                        onClick={() => runAction('payment', () => recordOrderPayment(selectedOrder.id, paymentDraft), selectedOrder.status === 'pending' || selectedOrder.status === 'cancelled' ? `Order #${selectedOrder.order_number} marked Paid` : 'Payment reference saved')}
                       >
-                        {selectedOrder.status === 'pending' ? 'Mark Paid' : 'Save'}
+                        {selectedOrder.status === 'pending' || selectedOrder.status === 'cancelled' ? 'Mark Paid' : 'Save'}
                       </Button>
                     </div>
                   </div>

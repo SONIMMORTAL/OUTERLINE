@@ -9,6 +9,7 @@ import { useCartStore } from '@/lib/store/cart'
 import { toast } from 'sonner'
 import { SizeGuideModal } from '@/components/store/SizeGuideModal'
 import { DEFECT_CLAIM_WINDOW_DAYS, DELIVERY_ESTIMATE, FREE_SHIPPING_THRESHOLD } from '@/lib/store-policies'
+import { findVariant, LOW_STOCK_THRESHOLD, skuFor, stockFor } from '@/lib/inventory'
 
 interface ProductDetailClientProps {
   product: any
@@ -103,7 +104,13 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   
   // Start with the primary front view
   const [selectedColor, setSelectedColor] = useState<string>(colors[0] || 'Standard')
-  const [selectedSize, setSelectedSize] = useState<string>(sizes[0] || 'M')
+  // Start on the first size that is in stock for the default colorway
+  const [selectedSize, setSelectedSize] = useState<string>(
+    sizes.find(size => stockFor(variants, colors[0], size) > 0) || sizes[0] || 'M'
+  )
+  const selectedVariant = findVariant(variants, selectedColor, selectedSize)
+  const isSelectionSoldOut = !selectedVariant || selectedVariant.inventory_quantity <= 0
+  const cartItems = useCartStore((s) => s.items)
   const [activeImage, setActiveImage] = useState<string>(gallery[0]?.url || images[0] || '/placeholder.jpg')
   const [activeImageType, setActiveImageType] = useState<'model' | 'front' | 'back'>(gallery[0]?.type || 'front')
   const [currentViewKind, setCurrentViewKind] = useState<'model' | 'render'>(gallery[0]?.viewKind || 'model')
@@ -192,6 +199,11 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   // Map color selection to the correct garment image and synchronize view mode
   const handleColorSelect = (color: string) => {
     setSelectedColor(color)
+    // If the chosen size is sold out in the new colorway, move to one that is in stock
+    if (stockFor(variants, color, selectedSize) <= 0) {
+      const inStockSize = sizes.find(size => stockFor(variants, color, size) > 0)
+      if (inStockSize) setSelectedSize(inStockSize)
+    }
     
     if (imagesByColor && imagesByColor[color]) {
       const c = imagesByColor[color]
@@ -276,24 +288,29 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   }
 
   const handleAddToCart = () => {
-    const matchedVariant = variants.find(
-      v => (v.color === selectedColor || !selectedColor) && (v.size === selectedSize || !selectedSize)
-    ) || variants[0]
+    if (!selectedVariant || isSelectionSoldOut) {
+      toast.error(`${selectedColor} / ${selectedSize} is sold out.`)
+      return
+    }
 
-    const variantId = matchedVariant?.id || `${product.id}-${selectedSize}-${selectedColor}`
-    const sku = matchedVariant?.sku || `${product.slug}-${selectedSize}-${selectedColor}`.toUpperCase()
+    const inCart = cartItems.find(item => item.id === selectedVariant.id)?.quantity ?? 0
+    if (inCart >= selectedVariant.inventory_quantity) {
+      toast.error(`Only ${selectedVariant.inventory_quantity} available, and they're already in your cart.`)
+      return
+    }
 
     addItem({
-      id: variantId,
+      id: selectedVariant.id,
       productId: product.id,
       productTitle: product.title,
       slug: product.slug,
-      sku: sku,
+      sku: selectedVariant.sku || skuFor(product.slug, selectedColor, selectedSize),
       size: selectedSize,
       color: selectedColor,
       price: Number(product.price),
       compareAtPrice: product.compare_at_price ? Number(product.compare_at_price) : undefined,
       image: currentFront || activeImage,
+      maxQuantity: selectedVariant.inventory_quantity,
     })
 
     toast.success(`Added ${product.title} (${selectedColor} / ${selectedSize}) to cart!`)
@@ -601,14 +618,22 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
               <div className="grid grid-cols-4 gap-2">
                 {sizes.map(size => {
                   const isSelected = selectedSize === size
+                  const soldOut = stockFor(variants, selectedColor, size) <= 0
                   return (
                     <button
                       key={size}
+                      type="button"
                       onClick={() => setSelectedSize(size)}
+                      aria-label={soldOut ? `${size}, sold out` : size}
+                      title={soldOut ? 'Sold out' : undefined}
                       className={`py-3 text-sm font-medium border rounded transition-colors ${
                         isSelected
-                          ? 'border-[#0A192F] bg-[#0A192F] text-[#FFFFFF]'
-                          : 'border-[#E5E5E5] text-[#0A192F] hover:border-[#0A192F] bg-[#FAFAFA]'
+                          ? soldOut
+                            ? 'border-[#0A192F] bg-[#F3F3F3] text-[#999999] line-through'
+                            : 'border-[#0A192F] bg-[#0A192F] text-[#FFFFFF]'
+                          : soldOut
+                            ? 'border-[#E5E5E5] text-[#BBBBBB] bg-[#FAFAFA] line-through hover:border-[#999999]'
+                            : 'border-[#E5E5E5] text-[#0A192F] hover:border-[#0A192F] bg-[#FAFAFA]'
                       }`}
                     >
                       {size}
@@ -616,16 +641,22 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
                   )
                 })}
               </div>
+              {isSelectionSoldOut ? (
+                <p className="text-xs font-medium text-[#666666]">{selectedColor} / {selectedSize} is sold out. Choose another size or colorway.</p>
+              ) : selectedVariant && selectedVariant.inventory_quantity <= LOW_STOCK_THRESHOLD ? (
+                <p className="text-xs font-semibold text-[#B45309]">Only {selectedVariant.inventory_quantity} left in {selectedColor} / {selectedSize}</p>
+              ) : null}
             </div>
           )}
 
           {/* Add to Cart Button */}
           <button
             onClick={handleAddToCart}
+            disabled={isSelectionSoldOut}
             className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 hover:bg-[#000000] transition-colors shadow-sm cursor-pointer"
           >
             <ShoppingCart className="w-4 h-4" />
-            Add to Cart
+            {isSelectionSoldOut ? 'Sold Out' : 'Add to Cart'}
           </button>
 
           {/* Purchase conditions — all sales are final, so these sit right next to the buy button */}

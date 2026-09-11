@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner'
 import { calculateOrderTotals } from '@/lib/pricing'
 import { US_STATE_TAX_RATES } from '@/lib/taxes'
-import { DELIVERY_ESTIMATE } from '@/lib/store-policies'
+import { DELIVERY_ESTIMATE, PAYMENT_HOLD_LABEL } from '@/lib/store-policies'
 
 /* ==========================================================================
    Payment Method Configuration
@@ -95,7 +95,7 @@ export default function CheckoutPage() {
             <h1 className="font-serif text-2xl text-[#0A192F]">Your order is reserved</h1>
             <p className="text-sm text-[#666666] leading-relaxed">
               Thank you, <span className="font-semibold text-[#0A192F]">{placedOrder.name}</span>. Complete your PayPal payment of{' '}
-              <span className="font-semibold text-[#0A192F]">${placedOrder.total.toFixed(2)}</span> to confirm it.
+              <span className="font-semibold text-[#0A192F]">${placedOrder.total.toFixed(2)}</span> within {PAYMENT_HOLD_LABEL} to confirm it and keep your sizes reserved.
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export default function CheckoutPage() {
           <div className="bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg p-4 text-left space-y-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-[#0A192F]">What Happens Next</p>
             <ol className="text-xs text-[#666666] space-y-1.5 leading-relaxed list-decimal list-inside">
-              <li>Pay on PayPal. Invoice <span className="font-mono font-semibold text-[#0A192F]">OL-{placedOrder.orderNumber}</span> is attached so we can match your payment.</li>
+              <li>Pay on PayPal. Your payment is matched to invoice <span className="font-mono font-semibold text-[#0A192F]">OL-{placedOrder.orderNumber}</span> and confirmed automatically.</li>
               <li>We confirm the payment and prepare your order.</li>
               <li>Once it ships, standard delivery takes {DELIVERY_ESTIMATE} and tracking appears on your order page.</li>
             </ol>

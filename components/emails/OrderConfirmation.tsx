@@ -1,7 +1,7 @@
 import { Html, Head, Body, Container, Section, Text, Hr, Row, Column, Button } from '@react-email/components';
 import * as React from 'react';
 import type { OrderRecord } from '@/lib/orders';
-import { DELIVERY_ESTIMATE } from '@/lib/store-policies';
+import { DELIVERY_ESTIMATE, PAYMENT_HOLD_LABEL } from '@/lib/store-policies';
 
 interface OrderConfirmationProps {
   order: OrderRecord;
@@ -26,8 +26,8 @@ export default function OrderConfirmation({ order, paymentUrl }: OrderConfirmati
           <Section style={content}>
             <Text style={heading}>Thanks, {order.customer_name}. Your order is reserved.</Text>
             <Text style={paragraph}>
-              Complete your PayPal payment of {money(order.total_amount)} to confirm order #{order.order_number}.
-              It ships once payment is received, and standard delivery takes {DELIVERY_ESTIMATE}.
+              Complete your PayPal payment of {money(order.total_amount)} within {PAYMENT_HOLD_LABEL} to confirm order #{order.order_number} and keep
+              your sizes reserved. We confirm the payment automatically, and standard delivery takes {DELIVERY_ESTIMATE} once it ships.
             </Text>
 
             <Section style={buttonSection}>

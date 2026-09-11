@@ -33,6 +33,7 @@ interface LookupOrder {
   shipping_city: string | null
   shipping_state: string | null
   payment_url: string | null
+  payment_expires_at: string | null
   items: { product_title: string; size: string | null; color: string | null; quantity: number; unit_price: number }[]
 }
 
@@ -209,6 +210,11 @@ export default function OrderStatusPage() {
                     >
                       Pay {money(order.total_amount)} with PayPal <ExternalLink className="w-3.5 h-3.5" />
                     </a>
+                  )}
+                  {order.payment_url && order.payment_expires_at && (
+                    <p className="text-[11px] text-[#666666]">
+                      Pay by {new Date(order.payment_expires_at).toLocaleString()} or the order is released. Payments are confirmed automatically.
+                    </p>
                   )}
                   {order.tracking_number && (
                     <p className="font-mono">

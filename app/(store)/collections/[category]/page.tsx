@@ -4,6 +4,9 @@ import ProductCard from '@/components/store/ProductCard'
 import { collections, type Collection, type Product } from '@/lib/mock-data'
 import { getCatalogProducts, filterProductsByCollection } from '@/lib/catalog'
 
+// Sold-out badges must reflect current stock.
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category } = await params
   const formattedTitle = category === 'been-brooklyn-baller' || category === 'baller' || category === 'baller-merch' || category === 'grey-baller'

@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { isSoldOut } from '@/lib/inventory'
 
 export interface ProductCardProps {
   product: {
@@ -17,6 +18,7 @@ export interface ProductCardProps {
     model_image?: string | null
     category: string
     collection: string
+    product_variants?: { inventory_quantity: number }[]
   }
 }
 
@@ -65,6 +67,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-[#FFFFFF]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            {isSoldOut(product.product_variants) && (
+              <span className="absolute top-3 left-3 z-10 rounded-full bg-[#0A192F] px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-widest text-white">
+                Sold Out
+              </span>
+            )}
           </div>
 
           {/* Content */}
