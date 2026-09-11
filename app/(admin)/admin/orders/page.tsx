@@ -1,29 +1,17 @@
-import { createClient } from '@/lib/supabase/server'
 import { OrdersClient } from './OrdersClient'
 import { requireAdmin } from '@/lib/auth/admin'
-import { getLocalOrders } from '@/lib/orders-store'
+import { listOrders, type OrderRecord } from '@/lib/orders'
 
 export default async function OrdersPage() {
   await requireAdmin()
-  let orders: any[] = []
 
+  let orders: OrderRecord[] = []
+  let loadError: string | null = null
   try {
-    const supabase = await createClient()
-    const { data } = await supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .order('created_at', { ascending: false })
-      
-    if (data && data.length > 0) {
-      orders = data
-    }
+    orders = await listOrders()
   } catch (err) {
-    // Database schema pending
+    loadError = err instanceof Error ? err.message : 'Could not load orders.'
   }
 
-  if (orders.length === 0) {
-    orders = getLocalOrders()
-  }
-
-  return <OrdersClient initialOrders={orders} />
+  return <OrdersClient initialOrders={orders} loadError={loadError} />
 }

@@ -1,17 +1,16 @@
 'use client'
 
 import React, { useState } from 'react'
-import { StoredDiscount } from '@/lib/discounts-store'
-import { 
-  Tag, 
-  Plus, 
-  Trash2, 
-  Check, 
-  Copy, 
-  Calendar, 
-  Hash, 
-  Percent, 
-  AlertCircle,
+import type { StoredDiscount } from '@/lib/discounts-store'
+import {
+  Tag,
+  Plus,
+  Trash2,
+  Check,
+  Copy,
+  Calendar,
+  Hash,
+  Percent,
   ToggleLeft,
   ToggleRight
 } from 'lucide-react'
@@ -19,13 +18,17 @@ import { toast } from 'sonner'
 
 interface DiscountsClientProps {
   initialDiscounts: StoredDiscount[]
+  loadError: string | null
 }
 
-export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
+export function DiscountsClient({ initialDiscounts, loadError }: DiscountsClientProps) {
   const [discounts, setDiscounts] = useState<StoredDiscount[]>(initialDiscounts)
   const [isCreating, setIsCreating] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  // Expiry badges compare against when the page was opened, keeping renders pure.
+  const [now] = useState(() => Date.now())
 
   // Form State
   const [code, setCode] = useState('')
@@ -56,73 +59,83 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: code.trim(),
-          percentage: Number(percentage) || 15,
+          percentage: Number(percentage),
           max_uses: Number(maxUses) || 0,
-          expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
+          // The code stays valid through the end of the chosen day, in the admin's time zone.
+          expires_at: expiresAt ? new Date(`${expiresAt}T23:59:59`).toISOString() : null,
           is_active: isActive,
         })
       })
 
-      const data = await res.json()
-      if (data.discount) {
-        setDiscounts([data.discount, ...discounts.filter(d => d.id !== data.discount.id)])
-        toast.success(`Coupon "${data.discount.code}" created successfully!`)
-        setIsCreating(false)
-        // Reset form
-        setCode('')
-        setPercentage(15)
-        setMaxUses(0)
-        setExpiresAt('')
-        setIsActive(true)
-      } else {
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.discount) {
         toast.error(data.error || 'Failed to create coupon.')
+        return
       }
+
+      setDiscounts([data.discount, ...discounts.filter(d => d.id !== data.discount.id)])
+      toast.success(`Coupon "${data.discount.code}" created.`)
+      setIsCreating(false)
+      setCode('')
+      setPercentage(15)
+      setMaxUses(0)
+      setExpiresAt('')
+      setIsActive(true)
     } catch {
       toast.error('Network error creating coupon.')
+    } finally {
+      setIsSubmitting(false)
     }
-    setIsSubmitting(false)
   }
 
   const handleToggleActive = async (id: string) => {
+    setBusyId(id)
     try {
       const res = await fetch('/api/discounts', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, action: 'toggle' })
       })
-      const data = await res.json()
-      if (data.discount) {
-        setDiscounts(discounts.map(d => d.id === id ? data.discount : d))
-        toast.success(`Coupon status updated!`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.discount) {
+        toast.error(data.error || 'Failed to update coupon status.')
+        return
       }
+      setDiscounts(discounts.map(d => d.id === id ? data.discount : d))
+      toast.success(`Coupon ${data.discount.is_active ? 'activated' : 'deactivated'}.`)
     } catch {
       toast.error('Failed to update coupon status.')
+    } finally {
+      setBusyId(null)
     }
   }
 
   const handleDelete = async (id: string, couponCode: string) => {
     if (!confirm(`Are you sure you want to delete coupon "${couponCode}"?`)) return
 
+    setBusyId(id)
     try {
-      const res = await fetch(`/api/discounts?id=${encodeURIComponent(id)}`, {
-        method: 'DELETE'
-      })
-      const data = await res.json()
-      if (data.success) {
-        setDiscounts(discounts.filter(d => d.id !== id))
-        toast.success(`Coupon "${couponCode}" deleted.`)
+      const res = await fetch(`/api/discounts?id=${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Failed to delete coupon.')
+        return
       }
+      setDiscounts(discounts.filter(d => d.id !== id))
+      toast.success(`Coupon "${couponCode}" deleted.`)
     } catch {
       toast.error('Failed to delete coupon.')
+    } finally {
+      setBusyId(null)
     }
   }
 
-  const filtered = discounts.filter(d => 
+  const filtered = discounts.filter(d =>
     d.code.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E5] pb-6">
         <div>
@@ -134,7 +147,7 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
             Coupon Codes &amp; Discounts
           </h1>
           <p className="text-xs text-[#666666] mt-1">
-            Create and manage promotional discounts, set usage limits, and configure expiration dates.
+            Create promo codes, set usage limits and expiration dates. A use is counted when an order is placed and returned if that order is cancelled.
           </p>
         </div>
 
@@ -147,25 +160,34 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
         </button>
       </div>
 
+      {loadError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+          <strong className="block mb-1">Discount codes could not be loaded.</strong>
+          {loadError}
+        </div>
+      )}
+
       {/* Create Form Card */}
       {isCreating && (
         <div className="p-6 bg-[#FFFFFF] border border-[#0A192F]/20 rounded-xl shadow-md space-y-6">
           <div className="border-b border-[#E5E5E5] pb-3">
             <h2 className="font-serif text-lg font-bold text-[#0A192F]">Create New Coupon</h2>
-            <p className="text-xs text-[#666666]">Configure promo discount rules and limitations.</p>
+            <p className="text-xs text-[#666666]">Codes ignore spaces and dashes, so &ldquo;THANK YOU&rdquo; and &ldquo;THANKYOU&rdquo; are the same code.</p>
           </div>
 
           <form onSubmit={handleCreateCoupon} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Code */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
+                <label htmlFor="coupon-code" className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
                   Promo Code *
                 </label>
                 <input
+                  id="coupon-code"
                   type="text"
                   required
-                  placeholder="e.g. THANK YOU"
+                  maxLength={32}
+                  placeholder="e.g. DROP20"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   className="w-full text-xs font-mono p-2.5 rounded border border-[#E5E5E5] bg-[#FAFAFA] text-[#0A192F] uppercase focus:outline-none focus:border-[#0A192F]"
@@ -174,11 +196,12 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
 
               {/* Discount Percentage */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
+                <label htmlFor="coupon-percentage" className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
                   Discount (% Off) *
                 </label>
                 <div className="relative">
                   <input
+                    id="coupon-percentage"
                     type="number"
                     min={1}
                     max={100}
@@ -193,11 +216,12 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
 
               {/* Usage Limit */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
+                <label htmlFor="coupon-max-uses" className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
                   Usage Limit (0 = Unlimited)
                 </label>
                 <div className="relative">
                   <input
+                    id="coupon-max-uses"
                     type="number"
                     min={0}
                     placeholder="0"
@@ -211,17 +235,16 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
 
               {/* Expiration Date */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
-                  Expiration Date (Optional)
+                <label htmlFor="coupon-expires" className="text-[11px] uppercase tracking-wider font-semibold text-[#0A192F]">
+                  Last Valid Day (Optional)
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
-                    className="w-full text-xs font-mono p-2.5 rounded border border-[#E5E5E5] bg-[#FAFAFA] text-[#0A192F] focus:outline-none focus:border-[#0A192F]"
-                  />
-                </div>
+                <input
+                  id="coupon-expires"
+                  type="date"
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  className="w-full text-xs font-mono p-2.5 rounded border border-[#E5E5E5] bg-[#FAFAFA] text-[#0A192F] focus:outline-none focus:border-[#0A192F]"
+                />
               </div>
             </div>
 
@@ -232,7 +255,7 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded border-[#CCCCCC] text-[#0A192F] focus:ring-0 w-4 h-4"
+                  className="rounded border-[#CCCCCC] accent-[#0A192F] w-4 h-4"
                 />
                 <span className="text-xs font-medium text-[#0A192F]">Activate coupon immediately</span>
               </label>
@@ -260,8 +283,7 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
 
       {/* Coupons Table */}
       <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-xl overflow-hidden shadow-xs">
-        {/* Search */}
-        <div className="p-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-between">
+        <div className="p-4 border-b border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-between gap-4">
           <input
             type="text"
             placeholder="Search promo codes..."
@@ -280,19 +302,26 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
               <tr>
                 <th className="py-3 px-4">Coupon Code</th>
                 <th className="py-3 px-4">Discount</th>
-                <th className="py-3 px-4">Usage Stats</th>
-                <th className="py-3 px-4">Expiration Date</th>
+                <th className="py-3 px-4">Usage</th>
+                <th className="py-3 px-4">Expires</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E5E5E5]">
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-[#666666]">
+                    {discounts.length === 0 ? 'No coupon codes yet.' : 'No codes match your search.'}
+                  </td>
+                </tr>
+              )}
               {filtered.map((d) => {
-                const isExpired = d.expires_at && new Date(d.expires_at).getTime() < Date.now()
+                const isExpired = Boolean(d.expires_at) && new Date(d.expires_at as string).getTime() < now
                 const isMaxedOut = d.max_uses > 0 && d.uses_count >= d.max_uses
+                const isLive = d.is_active && !isExpired && !isMaxedOut
                 return (
                   <tr key={d.id} className="hover:bg-[#FAFAFA] transition-colors">
-                    {/* Code */}
                     <td className="py-3.5 px-4 font-mono font-bold text-sm text-[#0A192F]">
                       <div className="flex items-center gap-2">
                         <span>{d.code}</span>
@@ -310,20 +339,16 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
                       </div>
                     </td>
 
-                    {/* Discount */}
                     <td className="py-3.5 px-4 font-mono font-semibold text-emerald-600">
                       {d.percentage}% OFF
                     </td>
 
-                    {/* Usage Stats */}
                     <td className="py-3.5 px-4 font-mono text-[#666666]">
                       {d.max_uses > 0 ? (
                         <div className="space-y-1">
                           <span>{d.uses_count} / {d.max_uses} used</span>
                           {isMaxedOut && (
-                            <span className="block text-[10px] text-red-600 font-semibold">
-                              Limit Reached
-                            </span>
+                            <span className="block text-[10px] text-red-600 font-semibold">Limit Reached</span>
                           )}
                         </div>
                       ) : (
@@ -331,7 +356,6 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
                       )}
                     </td>
 
-                    {/* Expiration Date */}
                     <td className="py-3.5 px-4 text-[#666666]">
                       {d.expires_at ? (
                         <div className="flex items-center gap-1.5 font-mono">
@@ -348,23 +372,20 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
                       )}
                     </td>
 
-                    {/* Status */}
                     <td className="py-3.5 px-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase ${
-                        d.is_active && !isExpired && !isMaxedOut
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-gray-100 text-gray-700'
+                        isLive ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700'
                       }`}>
-                        {d.is_active && !isExpired && !isMaxedOut ? 'Active' : 'Inactive'}
+                        {isLive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
 
-                    {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
                       <div className="inline-flex items-center gap-2">
                         <button
                           onClick={() => handleToggleActive(d.id)}
-                          className="p-1.5 rounded hover:bg-[#EAEAEA] text-[#666666] hover:text-[#0A192F] transition-colors cursor-pointer"
+                          disabled={busyId === d.id}
+                          className="p-1.5 rounded hover:bg-[#EAEAEA] text-[#666666] hover:text-[#0A192F] transition-colors cursor-pointer disabled:opacity-50"
                           title={d.is_active ? 'Deactivate' : 'Activate'}
                         >
                           {d.is_active ? (
@@ -375,7 +396,8 @@ export function DiscountsClient({ initialDiscounts }: DiscountsClientProps) {
                         </button>
                         <button
                           onClick={() => handleDelete(d.id, d.code)}
-                          className="p-1.5 rounded hover:bg-red-50 text-[#888888] hover:text-red-600 transition-colors cursor-pointer"
+                          disabled={busyId === d.id}
+                          className="p-1.5 rounded hover:bg-red-50 text-[#888888] hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50"
                           title="Delete Coupon"
                         >
                           <Trash2 className="w-4 h-4" />

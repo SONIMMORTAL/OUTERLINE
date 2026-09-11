@@ -1,108 +1,52 @@
 import { NextResponse } from 'next/server'
-import { getLocalOrders } from '@/lib/orders-store'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { findCustomerOrder } from '@/lib/orders'
+import { buildPayPalPaymentUrl } from '@/lib/paypal'
 
-export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url)
-    const email = searchParams.get('email')?.trim().toLowerCase()
-    const orderNumber = searchParams.get('orderNumber')?.trim()
-
-    if (!email && !orderNumber) {
-      return NextResponse.json({ error: 'Email or order number is required' }, { status: 400 })
-    }
-
-    const localOrders = getLocalOrders()
-    let matched = localOrders.filter((order) => {
-      const matchEmail = email ? order.customer_email.toLowerCase() === email : true
-      const matchNumber = orderNumber ? String(order.order_number) === orderNumber || order.id === orderNumber : true
-      return matchEmail && matchNumber
-    })
-
-    // Also attempt Supabase fallback if available
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
-      try {
-        const supabase = createAdminClient()
-        let query = supabase.from('orders').select('*').order('created_at', { ascending: false })
-        
-        if (email) {
-          query = query.ilike('customer_email', email)
-        }
-        if (orderNumber) {
-          query = query.eq('id', orderNumber)
-        }
-
-        const { data: dbOrders, error } = await query
-        if (!error && dbOrders && (dbOrders as any[]).length > 0) {
-          // Merge unique by id or order_number
-          const existingIds = new Set(matched.map(o => o.id))
-          for (const dbo of (dbOrders as any[])) {
-            if (!existingIds.has(dbo.id)) {
-              matched.push({
-                id: dbo.id,
-                order_number: dbo.order_number || parseInt(String(dbo.id).replace(/\D/g, '').slice(-4)) || 1001,
-                customer_name: dbo.customer_name || 'Customer',
-                customer_email: dbo.customer_email,
-                customer_phone: dbo.shipping_address?.phone || '',
-                total_amount: Number(dbo.total_amount) || 0,
-                subtotal: Number(dbo.subtotal) || Number(dbo.total_amount) || 0,
-                discount_applied: Number(dbo.discount_applied) || 0,
-                status: dbo.status || 'paid',
-                payment_method: dbo.payment_method || 'Card',
-                shipping_address: dbo.shipping_address || {},
-                order_items: dbo.order_items || [],
-                vendor_notified: !!dbo.vendor_notified,
-                vendor_notified_at: dbo.vendor_notified_at,
-                tracking_number: dbo.tracking_number || '',
-                carrier: dbo.carrier || 'USPS',
-                created_at: dbo.created_at || new Date().toISOString()
-              })
-            }
-          }
-        }
-      } catch (dbErr) {
-        console.warn('Supabase query non-fatal fallback:', dbErr)
-      }
-    }
-
-    // Sort newest first
-    matched.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-    return NextResponse.json({
-      orders: matched,
-      count: matched.length
-    })
-  } catch (err: any) {
-    console.error('Order history query error:', err)
-    return NextResponse.json({ error: err.message || 'Failed to fetch order history' }, { status: 500 })
-  }
-}
-
+// Customers look up one order with the email AND order number from their confirmation.
+// POST keeps the email out of URLs and server logs.
 export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    const email = body.email?.trim().toLowerCase()
-    const orderNumber = body.orderNumber?.trim()
+  const body = await req.json().catch(() => ({}))
+  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
+  const orderNumber = Number(String(body.orderNumber ?? '').replace(/\D/g, ''))
 
-    if (!email && !orderNumber) {
-      return NextResponse.json({ error: 'Email or order number is required' }, { status: 400 })
+  if (!email || !Number.isInteger(orderNumber) || orderNumber <= 0) {
+    return NextResponse.json({ error: 'Enter the email and order number from your confirmation.' }, { status: 400 })
+  }
+
+  try {
+    const order = await findCustomerOrder(email, orderNumber)
+    if (!order) {
+      return NextResponse.json({ order: null })
     }
 
-    const localOrders = getLocalOrders()
-    const matched = localOrders.filter((order) => {
-      const matchEmail = email ? order.customer_email.toLowerCase() === email : true
-      const matchNumber = orderNumber ? String(order.order_number) === orderNumber || order.id === orderNumber : true
-      return matchEmail && matchNumber
-    })
-
-    matched.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
     return NextResponse.json({
-      orders: matched,
-      count: matched.length
+      order: {
+        order_number: order.order_number,
+        status: order.status,
+        created_at: order.created_at,
+        payment_method: order.payment_method,
+        subtotal: order.subtotal,
+        discount_applied: order.discount_applied,
+        discount_code: order.discount_code,
+        shipping_amount: order.shipping_amount,
+        tax_amount: order.tax_amount,
+        total_amount: order.total_amount,
+        tracking_number: order.tracking_number,
+        carrier: order.carrier,
+        shipping_city: order.shipping_address?.city ?? null,
+        shipping_state: order.shipping_address?.state ?? null,
+        payment_url: order.status === 'pending' ? buildPayPalPaymentUrl(order) : null,
+        items: order.order_items.map((item) => ({
+          product_title: item.product_title,
+          size: item.size,
+          color: item.color,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        })),
+      },
     })
-  } catch (err: any) {
-    console.error('Order history query error:', err)
-    return NextResponse.json({ error: err.message || 'Failed to fetch order history' }, { status: 500 })
+  } catch (err) {
+    console.error('Order lookup failed:', err)
+    return NextResponse.json({ error: 'We could not look up your order right now. Please try again.' }, { status: 500 })
   }
 }

@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import {
-  getLocalDiscounts,
-  saveDiscount,
+  createDiscount,
   deleteDiscount,
-  toggleDiscountActive
+  DiscountInputError,
+  listDiscounts,
+  toggleDiscountActive,
+  updateDiscount
 } from '@/lib/discounts-store'
 import { getAdminSession } from '@/lib/auth/admin'
 
@@ -11,35 +13,30 @@ function unauthorized() {
   return NextResponse.json({ error: 'Your admin session has expired. Please log in again.' }, { status: 401 })
 }
 
+function errorResponse(err: unknown) {
+  if (err instanceof DiscountInputError) {
+    return NextResponse.json({ error: err.message }, { status: 400 })
+  }
+  console.error('Discount API error:', err)
+  return NextResponse.json({ error: err instanceof Error ? err.message : 'Something went wrong.' }, { status: 500 })
+}
+
 export async function GET() {
   if (!(await getAdminSession())) return unauthorized()
   try {
-    const discounts = getLocalDiscounts()
-    return NextResponse.json({ discounts })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ discounts: await listDiscounts() })
+  } catch (err) {
+    return errorResponse(err)
   }
 }
 
 export async function POST(req: Request) {
   if (!(await getAdminSession())) return unauthorized()
   try {
-    const body = await req.json()
-    if (!body.code) {
-      return NextResponse.json({ error: 'Coupon code is required.' }, { status: 400 })
-    }
-
-    const created = saveDiscount({
-      code: body.code,
-      percentage: Number(body.percentage) || 15,
-      max_uses: body.max_uses ? Number(body.max_uses) : 0,
-      expires_at: body.expires_at || null,
-      is_active: body.is_active !== undefined ? !!body.is_active : true,
-    })
-
-    return NextResponse.json({ discount: created, success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const discount = await createDiscount(await req.json())
+    return NextResponse.json({ discount, success: true })
+  } catch (err) {
+    return errorResponse(err)
   }
 }
 
@@ -50,31 +47,24 @@ export async function PATCH(req: Request) {
     if (!body.id) {
       return NextResponse.json({ error: 'Discount ID is required.' }, { status: 400 })
     }
-
-    if (body.action === 'toggle') {
-      const updated = toggleDiscountActive(body.id)
-      return NextResponse.json({ discount: updated, success: true })
-    }
-
-    const updated = saveDiscount(body)
-    return NextResponse.json({ discount: updated, success: true })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const { id, action, ...fields } = body
+    const discount = action === 'toggle' ? await toggleDiscountActive(id) : await updateDiscount(id, fields)
+    return NextResponse.json({ discount, success: true })
+  } catch (err) {
+    return errorResponse(err)
   }
 }
 
 export async function DELETE(req: Request) {
   if (!(await getAdminSession())) return unauthorized()
   try {
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+    const id = new URL(req.url).searchParams.get('id')
     if (!id) {
       return NextResponse.json({ error: 'Discount ID is required.' }, { status: 400 })
     }
-
-    const success = deleteDiscount(id)
-    return NextResponse.json({ success })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    await deleteDiscount(id)
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    return errorResponse(err)
   }
 }

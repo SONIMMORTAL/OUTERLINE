@@ -80,7 +80,7 @@ export default function VendorPurchaseOrder({
 const main = {
   backgroundColor: '#FFFFFF',
   fontFamily: 'Inter, sans-serif',
-  color: '#F9F9F9',
+  color: '#0A192F',
 };
 
 const container = {
@@ -100,7 +100,7 @@ const brandText = {
   fontSize: '24px',
   fontWeight: 'bold',
   margin: '0',
-  color: '#FFFFFF',
+  color: '#0A192F',
 };
 
 const poText = {

@@ -21,29 +21,23 @@ import {
 } from 'lucide-react'
 
 import { requireAdmin } from '@/lib/auth/admin'
-import { getLocalOrders } from '@/lib/orders-store'
+import { listOrders, type OrderRecord } from '@/lib/orders'
+import { REVENUE_STATUSES } from '@/lib/order-status'
 import { getCountdown } from '@/lib/countdown-store'
 
 export default async function AdminDashboard() {
   await requireAdmin()
-  let orders: any[] = []
+  let orders: OrderRecord[] = []
   let lowStockVariants: any[] = []
 
   try {
+    orders = await listOrders(500)
+  } catch (err) {
+    console.error('Dashboard orders unavailable:', err)
+  }
+
+  try {
     const supabase = await createClient()
-
-    // Fetch orders
-    const { data: dbOrders } = await supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (dbOrders && dbOrders.length > 0) {
-      orders = dbOrders
-    }
-
-    // Fetch low stock
     const { data: dbLowStock } = await supabase
       .from('product_variants')
       .select('*, products(title)')
@@ -56,12 +50,8 @@ export default async function AdminDashboard() {
     // Database schema pending
   }
 
-  // Read real storefront orders
-  if (orders.length === 0) {
-    orders = getLocalOrders()
-  }
-
-  const validOrders = orders.filter(o => o.status !== 'cancelled')
+  // Only orders with a received payment count toward revenue
+  const validOrders = orders.filter(o => REVENUE_STATUSES.includes(o.status))
   const totalRevenue = validOrders.reduce((sum, o) => sum + Number(o.total_amount), 0)
   const orderCount = validOrders.length
   const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0

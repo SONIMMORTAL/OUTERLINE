@@ -1,179 +1,145 @@
-import fs from 'fs'
-import path from 'path'
+import { createServiceClient } from '@/lib/supabase/admin'
+
+// Discount codes live in the Supabase `discounts` table (supabase/migrations/002_orders_discounts.sql).
+// The table has no public access; everything goes through the service-role client.
 
 export interface StoredDiscount {
   id: string
   code: string
   percentage: number
   is_active: boolean
-  max_uses: number // 0 or negative indicates unlimited
+  max_uses: number // 0 = unlimited
   uses_count: number
-  expires_at: string | null // ISO string or null
+  expires_at: string | null
   created_at: string
 }
 
-const dataFilePath = path.join(process.cwd(), 'data', 'discounts.json')
+export class DiscountInputError extends Error {}
 
-const DEFAULT_DISCOUNTS: StoredDiscount[] = [
-  {
-    id: 'disc_thank_you',
-    code: 'THANK YOU',
-    percentage: 15,
-    is_active: true,
-    max_uses: 5000,
-    uses_count: 0,
-    expires_at: null,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'disc_outer15',
-    code: 'OUTER15',
-    percentage: 15,
-    is_active: true,
-    max_uses: 1000,
-    uses_count: 0,
-    expires_at: null,
-    created_at: new Date().toISOString(),
-  }
-]
-
-export function getLocalDiscounts(): StoredDiscount[] {
-  try {
-    if (!fs.existsSync(dataFilePath)) {
-      saveAllDiscounts(DEFAULT_DISCOUNTS)
-      return DEFAULT_DISCOUNTS
-    }
-    const raw = fs.readFileSync(dataFilePath, 'utf-8')
-    const list: StoredDiscount[] = JSON.parse(raw)
-    
-    // Ensure "THANK YOU" is always present if not already added
-    const hasThankYou = list.some(d => normalizeCode(d.code) === 'THANKYOU')
-    if (!hasThankYou) {
-      list.unshift(DEFAULT_DISCOUNTS[0])
-      saveAllDiscounts(list)
-    }
-    return list
-  } catch (err) {
-    return DEFAULT_DISCOUNTS
-  }
-}
-
-export function saveAllDiscounts(discounts: StoredDiscount[]): void {
-  try {
-    fs.mkdirSync(path.dirname(dataFilePath), { recursive: true })
-    fs.writeFileSync(dataFilePath, JSON.stringify(discounts, null, 2), 'utf-8')
-  } catch (err) {
-    console.error('Failed to write discounts.json:', err)
-  }
-}
+const COLUMNS = 'id, code, percentage, is_active, max_uses, uses_count, expires_at, created_at'
 
 export function normalizeCode(code: string): string {
   return (code || '').toUpperCase().replace(/[\s\-_]/g, '')
 }
 
-export function saveDiscount(discount: Partial<StoredDiscount>): StoredDiscount {
-  const existing = getLocalDiscounts()
-  const rawCode = (discount.code || '').trim().toUpperCase()
+function databaseError(error: { code?: string; message: string }, action: string): Error {
+  if (error.code === '23505') return new DiscountInputError('A coupon with this code already exists.')
+  return new Error(`Could not ${action}: ${error.message}`)
+}
 
-  if (discount.id) {
-    // Update existing
-    const index = existing.findIndex(d => d.id === discount.id)
-    if (index !== -1) {
-      existing[index] = {
-        ...existing[index],
-        ...discount,
-        code: rawCode || existing[index].code,
-        percentage: Number(discount.percentage) || existing[index].percentage,
-        max_uses: discount.max_uses !== undefined ? Number(discount.max_uses) : existing[index].max_uses,
-        expires_at: discount.expires_at !== undefined ? discount.expires_at : existing[index].expires_at,
-        is_active: discount.is_active !== undefined ? !!discount.is_active : existing[index].is_active,
-      }
-      saveAllDiscounts(existing)
-      return existing[index]
+function parseInput(raw: Record<string, unknown>, partial: boolean): Record<string, unknown> {
+  const fields: Record<string, unknown> = {}
+
+  if (!partial || raw.code !== undefined) {
+    const code = String(raw.code ?? '').trim().toUpperCase().replace(/\s+/g, ' ')
+    if (!/^[A-Z0-9][A-Z0-9 _-]{1,31}$/.test(code)) {
+      throw new DiscountInputError('Codes must be 2–32 characters: letters, numbers, spaces, dashes, or underscores.')
+    }
+    fields.code = code
+  }
+  if (!partial || raw.percentage !== undefined) {
+    const percentage = Number(raw.percentage)
+    if (!Number.isInteger(percentage) || percentage < 1 || percentage > 100) {
+      throw new DiscountInputError('Discount must be a whole number from 1 to 100.')
+    }
+    fields.percentage = percentage
+  }
+  if (!partial || raw.max_uses !== undefined) {
+    const maxUses = Number(raw.max_uses ?? 0)
+    if (!Number.isInteger(maxUses) || maxUses < 0) {
+      throw new DiscountInputError('Usage limit must be 0 (unlimited) or a positive whole number.')
+    }
+    fields.max_uses = maxUses
+  }
+  if (!partial || raw.expires_at !== undefined) {
+    if (raw.expires_at == null || raw.expires_at === '') {
+      fields.expires_at = null
+    } else {
+      const expiresAt = new Date(String(raw.expires_at))
+      if (isNaN(expiresAt.getTime())) throw new DiscountInputError('Expiration date is not valid.')
+      fields.expires_at = expiresAt.toISOString()
     }
   }
-
-  // Create new
-  const newDiscount: StoredDiscount = {
-    id: discount.id || `disc_${Date.now().toString(36)}`,
-    code: rawCode,
-    percentage: Number(discount.percentage) || 15,
-    is_active: discount.is_active !== undefined ? !!discount.is_active : true,
-    max_uses: discount.max_uses !== undefined ? Number(discount.max_uses) : 0,
-    uses_count: 0,
-    expires_at: discount.expires_at || null,
-    created_at: new Date().toISOString(),
+  if (!partial || raw.is_active !== undefined) {
+    fields.is_active = raw.is_active === undefined ? true : Boolean(raw.is_active)
   }
 
-  const updated = [newDiscount, ...existing]
-  saveAllDiscounts(updated)
-  return newDiscount
+  return fields
 }
 
-export function deleteDiscount(id: string): boolean {
-  const existing = getLocalDiscounts()
-  const filtered = existing.filter(d => d.id !== id)
-  if (filtered.length !== existing.length) {
-    saveAllDiscounts(filtered)
-    return true
-  }
-  return false
+export async function listDiscounts(): Promise<StoredDiscount[]> {
+  const { data, error } = await createServiceClient()
+    .from('discounts')
+    .select(COLUMNS)
+    .order('created_at', { ascending: false })
+  if (error) throw databaseError(error, 'load discount codes')
+  return (data ?? []) as StoredDiscount[]
 }
 
-export function toggleDiscountActive(id: string): StoredDiscount | null {
-  const existing = getLocalDiscounts()
-  const target = existing.find(d => d.id === id)
-  if (target) {
-    target.is_active = !target.is_active
-    saveAllDiscounts(existing)
-    return target
-  }
-  return null
+export async function createDiscount(raw: Record<string, unknown>): Promise<StoredDiscount> {
+  const { data, error } = await createServiceClient()
+    .from('discounts')
+    .insert(parseInput(raw, false))
+    .select(COLUMNS)
+    .single()
+  if (error) throw databaseError(error, 'create the coupon')
+  return data as StoredDiscount
 }
 
-export function validateDiscount(inputCode: string): {
-  valid: boolean
-  discount?: StoredDiscount
-  error?: string
-} {
+export async function updateDiscount(id: string, raw: Record<string, unknown>): Promise<StoredDiscount> {
+  const { data, error } = await createServiceClient()
+    .from('discounts')
+    .update(parseInput(raw, true))
+    .eq('id', id)
+    .select(COLUMNS)
+    .single()
+  if (error) throw databaseError(error, 'update the coupon')
+  return data as StoredDiscount
+}
+
+export async function toggleDiscountActive(id: string): Promise<StoredDiscount> {
+  const supabase = createServiceClient()
+  const { data: current, error } = await supabase.from('discounts').select('is_active').eq('id', id).single()
+  if (error || !current) throw new Error('Coupon not found.')
+  return updateDiscount(id, { is_active: !current.is_active })
+}
+
+export async function deleteDiscount(id: string): Promise<void> {
+  const { error } = await createServiceClient().from('discounts').delete().eq('id', id)
+  if (error) throw databaseError(error, 'delete the coupon')
+}
+
+// Read-only check for the checkout "Apply" button. The use is only claimed when the order is placed.
+export async function validateDiscount(inputCode: string): Promise<{ valid: boolean; discount?: StoredDiscount; error?: string }> {
   const normalized = normalizeCode(inputCode)
-  if (!normalized) {
-    return { valid: false, error: 'Please enter a coupon code.' }
+  if (!normalized) return { valid: false, error: 'Please enter a coupon code.' }
+
+  const found = (await listDiscounts()).find((d) => normalizeCode(d.code) === normalized)
+  if (!found) return { valid: false, error: 'Invalid coupon code.' }
+  if (!found.is_active) return { valid: false, error: 'This coupon is currently inactive.' }
+  if (found.expires_at && new Date(found.expires_at).getTime() < Date.now()) {
+    return { valid: false, error: 'This coupon code has expired.' }
   }
-
-  const discounts = getLocalDiscounts()
-  const found = discounts.find(d => normalizeCode(d.code) === normalized)
-
-  if (!found) {
-    return { valid: false, error: 'Invalid coupon code.' }
-  }
-
-  if (!found.is_active) {
-    return { valid: false, error: 'This coupon is currently inactive.' }
-  }
-
-  // Check expiration date
-  if (found.expires_at) {
-    const expiry = new Date(found.expires_at)
-    if (!isNaN(expiry.getTime()) && expiry.getTime() < Date.now()) {
-      return { valid: false, error: 'This coupon code has expired.' }
-    }
-  }
-
-  // Check usage limit
   if (found.max_uses > 0 && found.uses_count >= found.max_uses) {
-    return { valid: false, error: 'This coupon code has reached its maximum usage limit.' }
+    return { valid: false, error: 'This coupon code has reached its usage limit.' }
   }
-
   return { valid: true, discount: found }
 }
 
-export function incrementDiscountUse(inputCode: string): void {
-  const normalized = normalizeCode(inputCode)
-  const discounts = getLocalDiscounts()
-  const found = discounts.find(d => normalizeCode(d.code) === normalized)
-  if (found) {
-    found.uses_count = (found.uses_count || 0) + 1
-    saveAllDiscounts(discounts)
-  }
+// Atomically claims one use. Returns null if the code is invalid, inactive, expired, or used up.
+export async function redeemDiscount(code: string): Promise<StoredDiscount | null> {
+  const { data, error } = await createServiceClient().rpc('redeem_discount', { p_code: code })
+  if (error) throw new Error(`Could not apply the discount code: ${error.message}`)
+  return ((data ?? []) as StoredDiscount[])[0] ?? null
+}
+
+export async function releaseDiscount(id: string): Promise<void> {
+  const { error } = await createServiceClient().rpc('release_discount', { p_id: id })
+  if (error) console.error('Could not release discount use:', error.message)
+}
+
+export async function releaseDiscountByCode(code: string): Promise<void> {
+  const normalized = normalizeCode(code)
+  const found = (await listDiscounts()).find((d) => normalizeCode(d.code) === normalized)
+  if (found) await releaseDiscount(found.id)
 }

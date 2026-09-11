@@ -24,6 +24,19 @@ export function getServiceRoleKeyError(): string | null {
     : null
 }
 
+// Untyped service-role client for tables whose columns are newer than types/database.types.ts.
+// Throws a clear configuration error instead of silently falling back to the public key.
+export function createServiceClient() {
+  const keyError = getServiceRoleKeyError()
+  if (keyError) throw new Error(keyError)
+  return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    }
+  })
+}
+
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

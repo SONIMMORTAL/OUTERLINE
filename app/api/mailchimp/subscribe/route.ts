@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { subscribeToList } from '@/lib/mailchimp';
 import { Resend } from 'resend';
 import CustomerWelcome from '@/components/emails/CustomerWelcome';
-import { validateDiscount } from '@/lib/discounts-store';
 import { normalizePhone } from '@/lib/phone';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,10 +46,8 @@ export async function POST(req: Request) {
       console.warn('Mailchimp subscribe non-fatal error:', mcErr);
     }
 
-    // 2. Official Promo Code for subscribers
+    // 2. Official Promo Code for subscribers (managed in Admin → Discounts)
     const promoCode = 'THANK YOU';
-    // Ensure discount exists and is active
-    validateDiscount(promoCode);
 
     // 3. Dispatch Branded Welcome Email to the subscriber via Resend
     const resendApiKey = process.env.RESEND_API_KEY;
