@@ -26,6 +26,13 @@ begin
 end;
 $$;
 
+-- Test orders from launch QA were deleted; the next real order is #1001 (or follows the highest existing number).
+select setval(
+  pg_get_serial_sequence('orders', 'order_number'),
+  greatest(1000, (select coalesce(max(order_number), 0) from orders)),
+  true
+);
+
 commit;
 
 -- Should return no rows.

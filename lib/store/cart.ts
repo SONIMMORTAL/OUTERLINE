@@ -109,6 +109,8 @@ export const useCartStore = create<CartStore>()(
           removeItem: () => {},
         }
       }),
+      // Only the items persist; an open drawer should not follow the shopper onto the next page (e.g. checkout).
+      partialize: (state) => ({ items: state.items }),
       skipHydration: true, // Handle hydration manually if needed, but since we use typeof window check it's partially safe. We can keep it false and ensure client-side rendering where used, or use a custom hook to avoid hydration mismatch.
     }
   )
