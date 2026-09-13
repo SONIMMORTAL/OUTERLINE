@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { OrderRecord } from '@/lib/orders'
-import { ORDER_STATUSES, ORDER_STATUS_LABELS, type OrderStatus } from '@/lib/order-status'
+import { ORDER_STATUSES, ORDER_STATUS_LABELS, paymentMethodLabel, type OrderStatus } from '@/lib/order-status'
 import { CARRIERS, isCarrier, trackingUrl } from '@/lib/carriers'
 import {
   notifyVendor,
@@ -76,6 +76,7 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
   const [notesDraft, setNotesDraft] = useState('')
 
   const selectedOrder = orders.find((o) => o.id === selectedId) ?? null
+  const isCardOrder = selectedOrder?.payment_method === 'stripe'
 
   const runAction = async (key: string, action: () => Promise<ActionResult>, successMessage: string) => {
     setBusyAction(key)
@@ -128,7 +129,7 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
           ORDERS & FULFILLMENT
         </h1>
         <p className="text-xs text-[#666666] mt-1">
-          PayPal payments confirm automatically. Unpaid orders release their stock when the hold ends. Send purchase orders to the vendor and add tracking here.
+          PayPal and card (Stripe) payments confirm automatically. Unpaid orders release their stock when the hold ends. Send purchase orders to the vendor and add tracking here.
         </p>
       </div>
 
@@ -312,7 +313,7 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
                   <StatusBadge status={selectedOrder.status} />
                 </DialogTitle>
                 <DialogDescription className="text-xs text-[#666666]">
-                  Placed {new Date(selectedOrder.created_at).toLocaleString()} · {selectedOrder.payment_method === 'paypal' ? 'PayPal' : selectedOrder.payment_method} · Invoice OL-{selectedOrder.order_number}
+                  Placed {new Date(selectedOrder.created_at).toLocaleString()} · {paymentMethodLabel(selectedOrder.payment_method)}{selectedOrder.payment_method === 'paypal' && ` · Invoice OL-${selectedOrder.order_number}`}
                 </DialogDescription>
               </DialogHeader>
 
@@ -358,20 +359,22 @@ export function OrdersClient({ initialOrders, loadError }: { initialOrders: Orde
                     </span>
                     <p className="text-[#666666]">
                       {selectedOrder.paid_at
-                        ? `Paid ${new Date(selectedOrder.paid_at).toLocaleString()}${selectedOrder.payment_reference ? ` · PayPal ${selectedOrder.payment_reference}` : ''}`
+                        ? `Paid ${new Date(selectedOrder.paid_at).toLocaleString()}${selectedOrder.payment_reference ? ` · ${paymentMethodLabel(selectedOrder.payment_method)} ${selectedOrder.payment_reference}` : ''}`
                         : selectedOrder.status === 'pending'
-                          ? `Waiting for PayPal (invoice OL-${selectedOrder.order_number}). Confirms automatically${selectedOrder.payment_expires_at ? `; stock is held until ${new Date(selectedOrder.payment_expires_at).toLocaleString()}` : ''}.`
-                          : `Not paid. If PayPal shows invoice OL-${selectedOrder.order_number} as paid, enter its transaction ID to mark it Paid.`}
+                          ? `${isCardOrder ? 'Waiting for card payment on Stripe' : `Waiting for PayPal (invoice OL-${selectedOrder.order_number})`}. Confirms automatically${selectedOrder.payment_expires_at ? `; stock is held until ${new Date(selectedOrder.payment_expires_at).toLocaleString()}` : ''}.`
+                          : isCardOrder
+                            ? `Not paid. If Stripe shows a payment for order #${selectedOrder.order_number}, enter its payment ID to mark it Paid.`
+                            : `Not paid. If PayPal shows invoice OL-${selectedOrder.order_number} as paid, enter its transaction ID to mark it Paid.`}
                     </p>
                     <label className="block text-[10px] uppercase tracking-wider text-[#666666]" htmlFor="payment-reference">
-                      PayPal transaction ID
+                      {isCardOrder ? 'Stripe payment ID' : 'PayPal transaction ID'}
                     </label>
                     <div className="flex gap-2">
                       <Input
                         id="payment-reference"
                         value={paymentDraft}
                         onChange={(e) => setPaymentDraft(e.target.value)}
-                        placeholder="e.g. 8XY12345AB6789012"
+                        placeholder={isCardOrder ? 'e.g. pi_3QxYz...' : 'e.g. 8XY12345AB6789012'}
                         className="h-8 text-xs font-mono border-[#E5E5E5]"
                       />
                       <Button

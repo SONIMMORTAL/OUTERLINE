@@ -38,7 +38,7 @@ interface LookupOrder {
 }
 
 const STATUS_STYLES: Record<OrderStatus, { className: string; Icon: typeof Clock; message: string }> = {
-  pending: { className: 'bg-amber-100 text-amber-900', Icon: Clock, message: 'We have not received your PayPal payment yet.' },
+  pending: { className: 'bg-amber-100 text-amber-900', Icon: Clock, message: 'We have not received your payment yet.' },
   paid: { className: 'bg-emerald-100 text-emerald-800', Icon: CreditCard, message: 'Payment received. We are getting your order ready.' },
   processing: { className: 'bg-blue-100 text-blue-800', Icon: Package, message: 'Your order is being prepared for shipment.' },
   fulfilled: { className: 'bg-green-100 text-green-800', Icon: Truck, message: `Your order has shipped. Standard delivery takes ${DELIVERY_ESTIMATE}.` },
@@ -206,9 +206,11 @@ export default function OrderStatusPage() {
                       href={order.payment_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded bg-[#0070BA] text-white font-semibold hover:bg-[#005EA6] transition-colors"
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded text-white font-semibold transition-colors ${
+                        order.payment_method === 'stripe' ? 'bg-[#0A192F] hover:bg-black' : 'bg-[#0070BA] hover:bg-[#005EA6]'
+                      }`}
                     >
-                      Pay {money(order.total_amount)} with PayPal <ExternalLink className="w-3.5 h-3.5" />
+                      Pay {money(order.total_amount)} {order.payment_method === 'stripe' ? 'by card' : 'with PayPal'} <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}
                   {order.payment_url && order.payment_expires_at && (

@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server'
-import { expireUnpaidOrders, findCustomerOrder } from '@/lib/orders'
+import { expireUnpaidOrders, findCustomerOrder, type OrderRecord } from '@/lib/orders'
 import { buildPayPalPaymentUrl } from '@/lib/paypal'
+import { getOpenCheckoutUrl, isCheckoutSessionId, isStripeConfigured } from '@/lib/stripe'
+
+// A card order can be paid again only while its Stripe payment page is still open.
+async function resumePaymentUrl(order: OrderRecord): Promise<string | null> {
+  if (order.status !== 'pending') return null
+  if (order.payment_method !== 'stripe') return buildPayPalPaymentUrl(order)
+  if (!isCheckoutSessionId(order.payment_reference) || !isStripeConfigured()) return null
+  try {
+    return await getOpenCheckoutUrl(order.payment_reference)
+  } catch (err) {
+    console.error(`Could not load the Stripe payment page for order #${order.order_number}:`, err)
+    return null
+  }
+}
 
 // Customers look up one order with the email AND order number from their confirmation.
 // POST keeps the email out of URLs and server logs.
@@ -37,7 +51,7 @@ export async function POST(req: Request) {
         carrier: order.carrier,
         shipping_city: order.shipping_address?.city ?? null,
         shipping_state: order.shipping_address?.state ?? null,
-        payment_url: order.status === 'pending' ? buildPayPalPaymentUrl(order) : null,
+        payment_url: await resumePaymentUrl(order),
         payment_expires_at: order.status === 'pending' ? order.payment_expires_at : null,
         items: order.order_items.map((item) => ({
           product_title: item.product_title,

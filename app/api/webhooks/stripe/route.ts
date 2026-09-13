@@ -1,160 +1,162 @@
-import { NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { sendAdminAlert, sendVendorPO } from '@/lib/twilio';
-import { subscribeToList } from '@/lib/mailchimp';
-import { Resend } from 'resend';
-import CustomerReceipt from '@/components/emails/CustomerReceipt';
-import VendorPurchaseOrder from '@/components/emails/VendorPurchaseOrder';
-import React from 'react';
+import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
+import type Stripe from 'stripe'
+import { createServiceClient } from '@/lib/supabase/admin'
+import { appendAdminNote, extendPaymentHold, updateOrder } from '@/lib/orders'
+import { sendAdminSms } from '@/lib/order-notifications'
+import { getStripe, isStripeConfigured } from '@/lib/stripe'
+import {
+  confirmCheckoutPayment,
+  findPaymentIntentOrder,
+  findSessionOrder,
+  type StripeOutcome
+} from '@/lib/stripe-orders'
 
-export const runtime = 'nodejs';
+const PENDING_PAYMENT_HOLD_DAYS = 7
 
+const money = (cents: number | null | undefined) => `$${((cents ?? 0) / 100).toFixed(2)}`
+
+// Stripe webhook listener. Answers 2xx for anything handled or deliberately ignored, 400 for a bad signature,
+// and 500 only for temporary failures so Stripe retries.
 export async function POST(req: Request) {
-  const body = await req.text();
-  const signature = req.headers.get('stripe-signature') as string;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!secret?.startsWith('whsec_') || !isStripeConfigured()) {
+    console.error('[stripe] STRIPE_WEBHOOK_SECRET or STRIPE_SECRET_KEY is not set; Stripe will retry')
+    return new NextResponse(null, { status: 500 })
+  }
 
-  let event;
+  const rawBody = await req.text()
+  let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err: any) {
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    event = getStripe().webhooks.constructEvent(rawBody, req.headers.get('stripe-signature') ?? '', secret)
+  } catch (err) {
+    console.warn('[stripe] Rejected a webhook with an invalid signature:', err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const supabaseAdmin = createAdminClient() as any;
-    const session = event.data.object as any;
-    const { discountCode, customerEmail } = session.metadata || {};
+  try {
+    const result = await recordAndApply(event)
+    console.log(`[stripe] ${event.id} ${event.type}: ${result}`)
+    return NextResponse.json({ received: true })
+  } catch (err) {
+    console.error('[stripe] Processing failed; Stripe will retry:', err)
+    return new NextResponse(null, { status: 500 })
+  }
+}
 
-    const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ['line_items.data.price.product'],
-    });
+function eventAmount(event: Stripe.Event): { amount: number | null; currency: string | null } {
+  const object = event.data.object as { amount_total?: number | null; amount?: number; currency?: string | null }
+  const cents = object.amount_total ?? object.amount
+  return { amount: typeof cents === 'number' ? cents / 100 : null, currency: object.currency?.toUpperCase() ?? null }
+}
 
-    // Create Order
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .insert({
-        stripe_session_id: session.id,
-        customer_email: customerEmail || session.customer_details?.email,
-        total_amount: (session.amount_total || 0) / 100,
-        subtotal: (session.amount_subtotal || 0) / 100,
-        discount_applied: (session.total_details?.amount_discount || 0) / 100,
-        discount_code: discountCode || null,
-        status: 'paid',
-        shipping_address: session.shipping_details?.address || {},
-        vendor_notified: true,
-        vendor_notified_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+async function recordAndApply(event: Stripe.Event): Promise<string> {
+  const supabase = createServiceClient()
+  const { amount, currency } = eventAmount(event)
 
-    if (orderError) {
-      console.error('Order creation error:', orderError);
-      return NextResponse.json({ error: 'Order creation failed' }, { status: 500 });
-    }
+  const { data: inserted, error: insertError } = await supabase
+    .from('payment_events')
+    .insert({
+      provider: 'stripe',
+      event_id: event.id,
+      event_status: event.type,
+      verified: true,
+      amount,
+      currency,
+      payload: event.data.object,
+    })
+    .select('id')
+    .single()
 
-    const items = fullSession.line_items?.data || [];
-    const orderItems = [];
-    const skus: string[] = [];
-
-    for (const item of items) {
-      const product = item.price?.product as any;
-      const variantId = product?.metadata?.variantId;
-      
-      if (variantId) {
-        orderItems.push({
-          order_id: order.id,
-          variant_id: variantId,
-          quantity: item.quantity,
-          price: item.price?.unit_amount,
-        });
-        skus.push(variantId.toString());
-
-        await supabaseAdmin.rpc('decrement_stock', {
-          p_variant_id: variantId,
-          p_qty: item.quantity,
-        });
-      }
-    }
-
-    if (orderItems.length > 0) {
-      await supabaseAdmin.from('order_items').insert(orderItems);
-    }
-
-    if (discountCode) {
-      const { data: discount } = await supabaseAdmin
-        .from('discounts')
-        .select('uses_count, max_uses, id')
-        .eq('code', discountCode)
-        .single();
-      
-      if (discount) {
-        await supabaseAdmin
-          .from('discounts')
-          .update({ uses_count: discount.uses_count + 1 })
-          .eq('id', discount.id);
-      }
-    }
-
-    // Fire and forget
-    const city = session.shipping_details?.address?.city || 'Unknown';
-    sendAdminAlert(order.id, session.amount_total, items.length, city).catch(console.error);
-    sendVendorPO(order.id, skus).catch(console.error);
-
-    // Resend Emails
-    const customerName = session.customer_details?.name || 'Customer';
-    const emailData = {
-      orderNumber: order.id,
-      customerName,
-      items: items.map(i => ({
-        product: (i.price?.product as any)?.name || 'Product',
-        qty: i.quantity || 1,
-        price: i.price?.unit_amount || 0,
-        size: (i.price?.product as any)?.metadata?.size || 'N/A',
-        color: (i.price?.product as any)?.metadata?.color || 'N/A',
-        sku: (i.price?.product as any)?.metadata?.variantId || 'N/A'
-      })),
-      subtotal: session.amount_subtotal,
-      discount: session.total_details?.amount_discount || 0,
-      total: session.amount_total,
-      shippingAddress: session.shipping_details?.address,
-      orderDate: new Date().toLocaleDateString(),
-    };
-
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
-      try {
-        const resend = new Resend(resendApiKey);
-        resend.emails.send({
-          from: 'Outerline <noreply@outerline.nyc>',
-          to: customerEmail || session.customer_details?.email,
-          subject: `Outerline Order Receipt #${order.id}`,
-          react: React.createElement(CustomerReceipt, emailData),
-        }).catch(console.error);
-
-        const vendorEmail = process.env.VENDOR_EMAIL;
-        if (vendorEmail) {
-          resend.emails.send({
-            from: 'Outerline Admin <admin@outerline.nyc>',
-            to: vendorEmail,
-            subject: `NEW PO: Order #${order.id}`,
-            react: React.createElement(VendorPurchaseOrder, emailData),
-          }).catch(console.error);
-        }
-      } catch (emailErr) {
-        console.error('Webhook email dispatch error:', emailErr);
-      }
-    }
-
-    // Mailchimp sync
-    if (customerEmail || session.customer_details?.email) {
-      subscribeToList(
-        customerEmail || session.customer_details?.email,
-        ['buyer', 'checkout'],
-        session.customer_details?.name?.split(' ')[0]
-      ).catch(console.error);
-    }
+  let eventRowId = inserted?.id as string | undefined
+  if (insertError) {
+    if (insertError.code !== '23505') throw new Error(insertError.message)
+    // Stripe resent an event we already have. Skip it unless the earlier attempt never finished.
+    const { data: existing } = await supabase
+      .from('payment_events')
+      .select('id, result')
+      .eq('provider', 'stripe')
+      .eq('event_id', event.id)
+      .eq('event_status', event.type)
+      .single()
+    if (existing?.result) return `duplicate (${existing.result})`
+    eventRowId = existing?.id
   }
 
-  return NextResponse.json({ received: true });
+  const outcome = await applyEvent(event)
+  if (eventRowId) {
+    await supabase.from('payment_events').update({ result: outcome.result, order_id: outcome.orderId }).eq('id', eventRowId)
+  }
+  return outcome.result
+}
+
+async function applyEvent(event: Stripe.Event): Promise<StripeOutcome> {
+  switch (event.type) {
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded': {
+      const session = event.data.object
+      if (session.payment_status === 'unpaid') return notePendingPayment(session)
+      const outcome = await confirmCheckoutPayment(session)
+      if (outcome.result === 'paid' || outcome.result === 'paid_out_of_stock') {
+        revalidatePath('/admin/orders')
+        revalidatePath('/admin')
+      }
+      return outcome
+    }
+    case 'checkout.session.async_payment_failed':
+      return releaseUnpaidOrder(event.data.object, 'The bank payment for this Stripe checkout failed.')
+    case 'checkout.session.expired':
+      return releaseUnpaidOrder(event.data.object, 'Stripe checkout expired without payment.')
+    case 'charge.refunded':
+      return noteRefund(event.data.object)
+    case 'charge.dispute.created':
+      return noteDispute(event.data.object)
+    default:
+      return { result: `ignored event ${event.type}`, orderId: null }
+  }
+}
+
+// Bank debits and similar methods finish checkout before the money arrives. Keep the stock held while they clear.
+async function notePendingPayment(session: Stripe.Checkout.Session): Promise<StripeOutcome> {
+  const order = await findSessionOrder(session)
+  if (!order) return { result: 'ignored: no matching order', orderId: null }
+  await appendAdminNote(order.id, `Stripe payment of ${money(session.amount_total)} is processing (session ${session.id}). Stock stays reserved until it clears.`)
+  if (order.status === 'pending') {
+    await extendPaymentHold(order.id, new Date(Date.now() + PENDING_PAYMENT_HOLD_DAYS * 24 * 60 * 60 * 1000))
+  }
+  return { result: 'pending noted', orderId: order.id }
+}
+
+async function releaseUnpaidOrder(session: Stripe.Checkout.Session, reason: string): Promise<StripeOutcome> {
+  const order = await findSessionOrder(session)
+  if (!order) return { result: 'ignored: no matching order', orderId: null }
+  if (order.status !== 'pending') return { result: `ignored: order is ${order.status}`, orderId: order.id }
+
+  await updateOrder(order.id, { status: 'cancelled' })
+  await appendAdminNote(order.id, `${reason} Order cancelled; stock and promo code released.`)
+  revalidatePath('/')
+  revalidatePath('/admin/orders')
+  return { result: 'cancelled', orderId: order.id }
+}
+
+async function noteRefund(charge: Stripe.Charge): Promise<StripeOutcome> {
+  const order = await findPaymentIntentOrder(charge.payment_intent)
+  if (!order) return { result: 'ignored: no matching order', orderId: null }
+
+  const label = charge.refunded ? 'full refund' : 'partial refund'
+  await appendAdminNote(order.id, `Stripe ${label}: ${money(charge.amount_refunded)} of ${money(charge.amount)} refunded (charge ${charge.id}).`)
+  await sendAdminSms(`OUTERLINE: Stripe ${label} of ${money(charge.amount_refunded)} on order #${order.order_number}. Update the order in the admin.`)
+  return { result: `${label} noted`, orderId: order.id }
+}
+
+async function noteDispute(dispute: Stripe.Dispute): Promise<StripeOutcome> {
+  const order = await findPaymentIntentOrder(dispute.payment_intent)
+  if (!order) return { result: 'ignored: no matching order', orderId: null }
+
+  const dueBy = dispute.evidence_details?.due_by
+    ? ` Respond by ${new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString('en-US')}.`
+    : ''
+  await appendAdminNote(order.id, `Stripe dispute opened: ${money(dispute.amount)}, reason "${dispute.reason}" (dispute ${dispute.id}).${dueBy}`)
+  await sendAdminSms(`OUTERLINE ALERT: card dispute of ${money(dispute.amount)} on order #${order.order_number} (${dispute.reason}). Respond in the Stripe dashboard.${dueBy}`)
+  return { result: 'dispute noted', orderId: order.id }
 }
