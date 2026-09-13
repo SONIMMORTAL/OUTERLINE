@@ -16,6 +16,10 @@ export function isStripeConfigured(): boolean {
   return /^(sk|rk)_(test|live)_[A-Za-z0-9]{20,}$/.test(process.env.STRIPE_SECRET_KEY ?? '')
 }
 
+export function isStripeLiveMode(): boolean {
+  return /^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY ?? '')
+}
+
 export function getStripe(): Stripe {
   if (!isStripeConfigured()) throw new Error('STRIPE_SECRET_KEY is missing or invalid.')
   client ??= new Stripe(process.env.STRIPE_SECRET_KEY!, { maxNetworkRetries: 2 })
@@ -28,7 +32,8 @@ export function isCheckoutSessionId(reference: string | null | undefined): refer
 
 export const toCents = (value: unknown) => Math.round(Number(value) * 100)
 
-function absoluteImageUrl(image: string): string | null {
+// Stripe needs full https URLs; site photos under /public are served from the live domain.
+export function absoluteImageUrl(image: string): string | null {
   if (/^https:\/\//i.test(image)) return image
   if (!image.startsWith('/')) return null
   return new URL(encodeURI(image), SITE_URL).toString()

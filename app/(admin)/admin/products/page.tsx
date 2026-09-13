@@ -2,8 +2,7 @@ import { ProductsClient } from './ProductsClient'
 import { mockProducts } from '@/lib/mock-data'
 import { requireAdmin } from '@/lib/auth/admin'
 import { createServiceClient } from '@/lib/supabase/admin'
-
-const SIZE_ORDER = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'OS']
+import { sortVariants } from '@/lib/inventory'
 
 export default async function ProductsPage() {
   await requireAdmin()
@@ -18,9 +17,7 @@ export default async function ProductsPage() {
 
     products = (data ?? []).map((product: any) => ({
       ...product,
-      product_variants: [...(product.product_variants ?? [])].sort((a: any, b: any) =>
-        String(a.color).localeCompare(String(b.color)) || SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size)
-      ),
+      product_variants: sortVariants(product.product_variants ?? []),
     }))
   } catch (err) {
     console.error('Admin products unavailable:', err)
