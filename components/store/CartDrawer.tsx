@@ -260,7 +260,7 @@ export default function CartDrawer() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1.5 text-xs font-serif uppercase tracking-widest text-[#0A192F]">
                       <Sparkles className="w-3.5 h-3.5 text-[#0A192F]" />
-                      <span>{!isFreeShipping ? 'UPSELL: UNLOCK FREE SHIPPING' : 'YOU MAY ALSO LIKE'}</span>
+                      <span>{!isFreeShipping ? 'UNLOCK FREE SHIPPING' : 'YOU MAY ALSO LIKE'}</span>
                     </div>
                     {!isFreeShipping && (
                       <span className="text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded font-mono font-medium">
