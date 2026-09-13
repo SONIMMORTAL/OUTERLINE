@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function SettingsClient() {
+export function SettingsClient({ children }: { children?: React.ReactNode }) {
   const [storeName, setStoreName] = useState('Outerline NYC')
   const [tagline, setTagline] = useState('Defined & Unconfined')
   const [vendorPhone, setVendorPhone] = useState('+1 (917) 555-0188')
@@ -48,6 +48,8 @@ export function SettingsClient() {
           Manage brand credentials, automated vendor phone notifications for order fulfillment, and drop policies.
         </p>
       </div>
+
+      {children}
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Brand Information */}

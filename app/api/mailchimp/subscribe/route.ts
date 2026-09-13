@@ -1,8 +1,7 @@
-import React from 'react';
 import { NextResponse } from 'next/server';
 import { subscribeToList } from '@/lib/mailchimp';
-import { Resend } from 'resend';
-import CustomerWelcome from '@/components/emails/CustomerWelcome';
+import { emailSetupProblem, getResend, sendEmail } from '@/lib/email';
+import { welcomeEmail } from '@/components/emails/CustomerWelcome';
 import { normalizePhone } from '@/lib/phone';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,28 +48,17 @@ export async function POST(req: Request) {
     // 2. Official Promo Code for subscribers (managed in Admin → Discounts)
     const promoCode = 'THANK YOU';
 
-    // 3. Dispatch Branded Welcome Email to the subscriber via Resend
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey && resendApiKey.startsWith('re_') && resendApiKey !== 're_your_resend_api_key') {
+    // 3. Email the code too. The popup already shows it, so a failed email doesn't fail the signup.
+    const setupProblem = emailSetupProblem();
+    if (setupProblem) {
+      console.error(`Welcome email to ${trimmedEmail} will not be delivered: ${setupProblem}`);
+    }
+    if (getResend()) {
       try {
-        const resend = new Resend(resendApiKey);
-        const sender = process.env.RESEND_FROM_EMAIL || 'Outerline NYC <onboarding@resend.dev>';
-
-        await resend.emails.send({
-          from: sender,
-          to: trimmedEmail,
-          subject: '⚡ Welcome to Outerline NYC — Your 15% OFF Promo Code',
-          react: React.createElement(CustomerWelcome, {
-            email: trimmedEmail,
-            firstName,
-            discountCode: promoCode,
-          }),
-        });
-      } catch (emailErr: any) {
-        console.error('Welcome email dispatch error via Resend:', emailErr?.message || emailErr);
+        await sendEmail(welcomeEmail(trimmedEmail, promoCode, firstName));
+      } catch (emailErr) {
+        console.error('Welcome email failed:', emailErr instanceof Error ? emailErr.message : emailErr);
       }
-    } else {
-      console.log(`[DEV/STAGING] Welcome email for ${trimmedEmail} prepared with code ${promoCode}. (Resend API key is pending or test key)`);
     }
 
     return NextResponse.json({
