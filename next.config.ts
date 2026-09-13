@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      // Photos of products created in the Stripe dashboard.
+      {
+        protocol: "https",
+        hostname: "files.stripe.com",
+      },
     ],
     formats: ["image/avif", "image/webp"],
     qualities: [75, 95],

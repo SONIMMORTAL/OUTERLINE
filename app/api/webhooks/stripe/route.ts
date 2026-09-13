@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/admin'
 import { appendAdminNote, extendPaymentHold, updateOrder } from '@/lib/orders'
 import { sendAdminSms } from '@/lib/order-notifications'
 import { getStripe, isStripeConfigured } from '@/lib/stripe'
+import { handleStripeProductEvent } from '@/lib/stripe-catalog'
 import {
   confirmCheckoutPayment,
   findPaymentIntentOrder,
@@ -111,6 +112,12 @@ async function applyEvent(event: Stripe.Event): Promise<StripeOutcome> {
       return noteRefund(event.data.object)
     case 'charge.dispute.created':
       return noteDispute(event.data.object)
+    case 'product.created':
+    case 'product.updated':
+    case 'product.deleted': {
+      const { action, detail } = await handleStripeProductEvent(event)
+      return { result: `${action}: ${detail}`, orderId: null }
+    }
     default:
       return { result: `ignored event ${event.type}`, orderId: null }
   }

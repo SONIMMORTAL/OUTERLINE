@@ -1,5 +1,5 @@
 import React from 'react'
-import { Resend } from 'resend'
+import { getResend, sendEmail } from '@/lib/email'
 import { sendSMS, sendVendorPO } from '@/lib/twilio'
 import { trackingUrl } from '@/lib/carriers'
 import { SITE_URL } from '@/lib/site'
@@ -12,15 +12,6 @@ import type { OrderRecord } from '@/lib/orders'
 // Set DISABLE_ORDER_NOTIFICATIONS=true to place test orders without texting or emailing anyone.
 function notificationsDisabled(): boolean {
   return process.env.DISABLE_ORDER_NOTIFICATIONS === 'true'
-}
-
-function getResend(): Resend | null {
-  const key = process.env.RESEND_API_KEY
-  return key && key.startsWith('re_') && key !== 're_your_resend_api_key' ? new Resend(key) : null
-}
-
-function fromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || 'Outerline <onboarding@resend.dev>'
 }
 
 function adminPhone(): string {
@@ -75,15 +66,13 @@ function adminPaidOrderHtml(order: OrderRecord, outOfStock: boolean): string {
 
 // Sent when an order is placed: the customer's order number and PayPal link. Admins hear about it once it's paid.
 export async function sendOrderReservedEmail(order: OrderRecord, paymentUrl: string): Promise<void> {
-  const resend = getResend()
   if (notificationsDisabled()) {
     console.log(`[order notifications disabled] reserved email for order #${order.order_number}`)
     return
   }
-  if (!resend) return
+  if (!getResend()) return
 
-  await settle('Order confirmation email', [resend.emails.send({
-    from: fromAddress(),
+  await settle('Order confirmation email', [sendEmail({
     to: order.customer_email,
     subject: `Outerline order #${order.order_number} — complete your payment`,
     react: React.createElement(OrderConfirmation, { order, paymentUrl }),
@@ -112,19 +101,16 @@ export async function sendOrderPaidNotifications(
     ))
   }
 
-  const resend = getResend()
-  if (resend) {
+  if (getResend()) {
     if (source !== 'admin' && process.env.ADMIN_EMAIL) {
-      tasks.push(resend.emails.send({
-        from: fromAddress(),
+      tasks.push(sendEmail({
         to: process.env.ADMIN_EMAIL,
         subject: `${outOfStock ? 'ACTION NEEDED — ' : ''}Paid order #${order.order_number} — ${money(order.total_amount)}`,
         html: adminPaidOrderHtml(order, outOfStock),
       }))
     }
     if (!outOfStock) {
-      tasks.push(resend.emails.send({
-        from: fromAddress(),
+      tasks.push(sendEmail({
         to: order.customer_email,
         subject: `Payment received — Outerline order #${order.order_number}`,
         html: `
@@ -150,16 +136,14 @@ export async function sendAdminSms(message: string): Promise<void> {
 }
 
 export async function sendShippedEmail(order: OrderRecord): Promise<void> {
-  const resend = getResend()
-  if (notificationsDisabled() || !resend) return
+  if (notificationsDisabled() || !getResend()) return
 
   const link = trackingUrl(order.carrier, order.tracking_number)
   const tracking = order.tracking_number
     ? `<p>Tracking (${escapeHtml(order.carrier)}): ${link ? `<a href="${escapeHtml(link)}">${escapeHtml(order.tracking_number)}</a>` : escapeHtml(order.tracking_number)}</p>`
     : ''
 
-  await settle('Shipping email', [resend.emails.send({
-    from: fromAddress(),
+  await settle('Shipping email', [sendEmail({
     to: order.customer_email,
     subject: `Your Outerline order #${order.order_number} has shipped`,
     html: `
@@ -182,10 +166,8 @@ export async function sendVendorPurchaseOrder(order: OrderRecord): Promise<void>
   const lines = order.order_items.map((i) => `${i.sku || i.product_title} ${i.size}/${i.color} x${i.quantity}`)
   const tasks: Promise<unknown>[] = [sendVendorPO(order.order_number, lines)]
 
-  const resend = getResend()
-  if (resend && process.env.VENDOR_EMAIL) {
-    tasks.push(resend.emails.send({
-      from: fromAddress(),
+  if (getResend() && process.env.VENDOR_EMAIL) {
+    tasks.push(sendEmail({
       to: process.env.VENDOR_EMAIL,
       subject: `PO: Outerline order #${order.order_number}`,
       react: React.createElement(VendorPurchaseOrder, {

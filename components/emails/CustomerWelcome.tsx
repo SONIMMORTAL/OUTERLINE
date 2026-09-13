@@ -7,6 +7,15 @@ interface CustomerWelcomeProps {
   discountCode?: string;
 }
 
+// The welcome message with the subscriber promo code, shared by the signup API and the admin test email.
+export function welcomeEmail(to: string, discountCode: string, firstName?: string) {
+  return {
+    to,
+    subject: '⚡ Welcome to Outerline NYC — Your 15% OFF Promo Code',
+    react: <CustomerWelcome email={to} firstName={firstName} discountCode={discountCode} />,
+  };
+}
+
 export default function CustomerWelcome({
   firstName,
   discountCode = 'THANK YOU',

@@ -1,209 +1,76 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog'
-import {
   PlusCircle,
   ChevronDown,
   ChevronRight,
+  Pencil,
+  RefreshCw,
   Search,
-  Trash2,
-  Upload,
-  Loader2
+  Trash2
 } from 'lucide-react'
 import {
-  createProduct,
+  syncWithStripe,
   updateProductStatus,
   updateVariantStock,
   deleteProduct
 } from './actions'
-import { createClient as createBrowserSupabase } from '@/lib/supabase/client'
+import { ProductFormDialog, STOREFRONT_COLLECTIONS } from './ProductForm'
 import { toast } from 'sonner'
 
-// Must match the size CHECK constraint on product_variants in supabase/migrations/001_init.sql
-const VARIANT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', 'OS']
-const STOREFRONT_COLLECTIONS = ['So New York', 'Been Brooklyn', 'Been Brooklyn Baller']
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function ProductsClient({ initialProducts }: { initialProducts: any[] }) {
+  const router = useRouter()
   const [products, setProducts] = useState(initialProducts)
   const [searchQuery, setSearchQuery] = useState('')
   const [collectionFilter, setCollectionFilter] = useState('all')
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
   const [stockInput, setStockInput] = useState<Record<string, string>>({})
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<any | null>(null)
+  const [formKey, setFormKey] = useState(0)
+  const [isSyncing, setIsSyncing] = useState(false)
 
-  // New Merchandise Form State
-  const [newTitle, setNewTitle] = useState('')
-  const [newSlug, setNewSlug] = useState('')
-  const [newCategory, setNewCategory] = useState('tees')
-  const [newCollection, setNewCollection] = useState('So New York')
-  const [newPrice, setNewPrice] = useState('')
-  const [newComparePrice, setNewComparePrice] = useState('')
-  const [newDescription, setNewDescription] = useState('')
-  const [newEditorialStory, setNewEditorialStory] = useState('')
-  const [newImages, setNewImages] = useState<string[]>([])
-  const [newImageUrlInput, setNewImageUrlInput] = useState('')
-  const [isUploading, setIsUploading] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isActive, setIsActive] = useState(true)
-  const [isFeatured, setIsFeatured] = useState(true)
-
-  // Dynamic Variants for new product
-  const [variantsList, setVariantsList] = useState<Array<{ size: string; color: string; sku: string; inventory_quantity: number }>>([
-    { size: 'S', color: 'White', sku: 'SNY-WHT-S', inventory_quantity: 15 },
-    { size: 'M', color: 'White', sku: 'SNY-WHT-M', inventory_quantity: 25 },
-    { size: 'L', color: 'White', sku: 'SNY-WHT-L', inventory_quantity: 20 },
-    { size: 'M', color: 'Black', sku: 'SNY-BLK-M', inventory_quantity: 20 },
-    { size: 'L', color: 'Black', sku: 'SNY-BLK-L', inventory_quantity: 15 },
-  ])
-
-  const handleTitleChange = (val: string) => {
-    setNewTitle(val)
-    const generatedSlug = val
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-    setNewSlug(generatedSlug)
+  // A fresh key resets the form to the product being edited (or to a blank form).
+  const openForm = (product: any | null) => {
+    setEditingProduct(product)
+    setFormKey((key) => key + 1)
+    setIsFormOpen(true)
   }
 
-  const handleAddImage = () => {
-    if (!newImageUrlInput.trim()) return
-    setNewImages([...newImages, newImageUrlInput.trim()])
-    setNewImageUrlInput('')
+  const handleSaved = (saved: any) => {
+    setProducts((current) =>
+      current.some((p) => p.id === saved.id)
+        ? current.map((p) => (p.id === saved.id ? saved : p))
+        : [saved, ...current]
+    )
   }
 
-  // Each file gets a signed upload URL from our API, then goes straight from the browser to Supabase Storage.
-  const handleImageFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0 || isUploading) return
-    setIsUploading(true)
-
-    const supabase = createBrowserSupabase()
-    const uploaded: string[] = []
-
-    for (const file of Array.from(files)) {
-      try {
-        const res = await fetch('/api/admin/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size })
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.error || 'Upload failed')
-
-        const { error } = await supabase.storage
-          .from(data.bucket)
-          .uploadToSignedUrl(data.path, data.token, file, { contentType: file.type })
-        if (error) throw error
-
-        uploaded.push(data.publicUrl)
-      } catch (err: any) {
-        toast.error(`${file.name}: ${err?.message || 'Upload failed'}`)
-      }
-    }
-
-    if (uploaded.length > 0) {
-      setNewImages(prev => [...prev, ...uploaded])
-      toast.success(`Uploaded ${uploaded.length} photo${uploaded.length === 1 ? '' : 's'}`)
-    }
-    setIsUploading(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-
-  const handleRemoveImage = (index: number) => {
-    setNewImages(newImages.filter((_, i) => i !== index))
-  }
-
-  const handleAddVariantRow = () => {
-    setVariantsList([
-      ...variantsList,
-      { size: 'XL', color: 'Black', sku: `${newSlug || 'PROD'}-XL-BLK`.toUpperCase(), inventory_quantity: 10 }
-    ])
-  }
-
-  const handleVariantChange = (index: number, field: string, value: any) => {
-    const updated = [...variantsList]
-    updated[index] = { ...updated[index], [field]: value }
-    setVariantsList(updated)
-  }
-
-  const handleRemoveVariantRow = (index: number) => {
-    setVariantsList(variantsList.filter((_, i) => i !== index))
-  }
-
-  const handleCreateMerchandise = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newTitle.trim() || !newPrice) {
-      toast.error('Please enter a product title and price.')
-      return
-    }
-    if (isUploading) {
-      toast.error('Wait for the photo upload to finish.')
-      return
-    }
-    if (newImages.length === 0) {
-      toast.error('Add at least one product photo.')
-      return
-    }
-
-    setIsSubmitting(true)
-    const numericPrice = parseFloat(newPrice)
-    const numericCompare = newComparePrice ? parseFloat(newComparePrice) : null
-
-    const productPayload = {
-      title: newTitle,
-      slug: newSlug || newTitle.toLowerCase().replace(/\s+/g, '-'),
-      category: newCategory,
-      collection: newCollection,
-      price: numericPrice,
-      compare_at_price: numericCompare,
-      description: newDescription || 'Crafted with premium materials and signature NYC streetwear tailoring.',
-      editorial_story: newEditorialStory || 'Forged in Brooklyn. Defined & Unconfined.',
-      images: newImages,
-      is_drop_active: isActive,
-      is_featured: isFeatured,
-      variants: variantsList
-    }
-
+  const handleSyncWithStripe = async () => {
+    setIsSyncing(true)
     try {
-      const result = await createProduct(productPayload)
+      const result = await syncWithStripe()
       if (!result.success) {
-        toast.error(result.error || 'Failed to create product.')
+        toast.error(result.error, { duration: 10000 })
+        return
       }
-      if (!result.data) return
-
-      const saved = result.data as any
-      setProducts([{ ...productPayload, ...saved, product_variants: saved.product_variants ?? [] }, ...products])
-      if (!result.success) return
-
-      toast.success(`Published "${newTitle}" to the store.`)
-      setIsModalOpen(false)
-
-      // Reset form
-      setNewTitle('')
-      setNewSlug('')
-      setNewPrice('')
-      setNewComparePrice('')
-      setNewDescription('')
-      setNewEditorialStory('')
-      setNewImages([])
+      const { counts, createdInStripe, notes } = result.summary
+      toast.success(
+        `Stripe sync done: ${counts.linked} matched, ${counts.imported} added from Stripe, ${counts.updated} updated, ${createdInStripe} added to Stripe.`,
+        { description: notes.length > 0 ? notes.join(' · ') : undefined, duration: 12000 }
+      )
+      router.refresh()
     } catch {
-      toast.error('Failed to create product.')
+      toast.error('Stripe sync failed. Please try again.')
     } finally {
-      setIsSubmitting(false)
+      setIsSyncing(false)
     }
   }
 
@@ -222,6 +89,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
     }
     setProducts(products.map(p => p.id === id ? { ...p, is_drop_active: newActive, is_featured: newFeatured } : p))
     toast.success(`Updated ${type === 'active' ? 'drop status' : 'featured status'}`)
+    if (result.warning) toast.warning(result.warning, { duration: 10000 })
   }
 
   const handleStockUpdate = async (variantId: string, productId: string) => {
@@ -256,6 +124,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
     }
     setProducts(products.filter(p => p.id !== id))
     toast.success(`Removed "${title}"`)
+    if (result.warning) toast.warning(result.warning, { duration: 10000 })
   }
 
   // Filter products by search and collection
@@ -276,332 +145,36 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
             MERCHANDISE & CATALOG
           </h1>
           <p className="text-xs text-[#666666] mt-1">
-            Upload new apparel, edit descriptions, adjust drop pricing, and manage live inventory stock.
+            Upload new apparel, edit names, photos, and pricing, and manage live inventory stock. Changes stay in sync with Stripe.
           </p>
         </div>
 
-        {/* Upload Merchandise Modal Trigger */}
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-[#0A192F] text-[#FFFFFF] hover:bg-[#000000] gap-2 font-serif tracking-widest text-xs uppercase px-5 py-2.5"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Upload New Merchandise</span>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSyncWithStripe}
+            disabled={isSyncing}
+            className="border-[#E5E5E5] text-[#0A192F] gap-2 font-serif tracking-widest text-xs uppercase px-4 py-2.5"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Syncing…' : 'Sync with Stripe'}</span>
+          </Button>
+          <Button
+            onClick={() => openForm(null)}
+            className="bg-[#0A192F] text-[#FFFFFF] hover:bg-[#000000] gap-2 font-serif tracking-widest text-xs uppercase px-5 py-2.5"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Upload New Merchandise</span>
+          </Button>
+        </div>
 
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-
-          {/* The base dialog caps width at sm:max-w-sm, so the width must be overridden at the same breakpoint. */}
-          <DialogContent className="w-[calc(100%-2rem)] max-w-3xl sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-[#FFFFFF] text-[#0A192F] border-[#E5E5E5]">
-            <DialogHeader>
-              <DialogTitle className="font-serif text-2xl tracking-wide text-[#0A192F]">
-                ADD NEW MERCHANDISE
-              </DialogTitle>
-              <DialogDescription className="text-xs text-[#666666]">
-                Configure garment details, set pricing, assign collections, and define size/color inventory variants.
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleCreateMerchandise} className="space-y-6 py-4">
-              {/* Section 1: Garment Basics */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-[#0A192F] border-b border-[#E5E5E5] pb-1">
-                  1. Garment Details
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">Item Title *</label>
-                    <Input
-                      placeholder="e.g. So New York Script Tee"
-                      value={newTitle}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      required
-                      className="border-[#E5E5E5] bg-[#FAFAFA]"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">URL Slug</label>
-                    <Input
-                      placeholder="e.g. so-new-york-script-tee"
-                      value={newSlug}
-                      onChange={(e) => setNewSlug(e.target.value)}
-                      className="border-[#E5E5E5] bg-[#FAFAFA] font-mono text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">Category *</label>
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="w-full h-9 rounded-md border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-1 text-xs text-[#0A192F]"
-                    >
-                      <option value="tees">Tees</option>
-                      <option value="hoodies">Hoodies & Sweaters</option>
-                      <option value="bottoms">Bottoms & Pants</option>
-                      <option value="headwear">Headwear & Caps</option>
-                      <option value="accessories">Accessories</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">Collection *</label>
-                    <select
-                      value={newCollection}
-                      onChange={(e) => setNewCollection(e.target.value)}
-                      className="w-full h-9 rounded-md border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-1 text-xs text-[#0A192F]"
-                    >
-                      {STOREFRONT_COLLECTIONS.map((name) => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">Retail Price ($) *</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="45.00"
-                      value={newPrice}
-                      onChange={(e) => setNewPrice(e.target.value)}
-                      required
-                      className="border-[#E5E5E5] bg-[#FAFAFA] font-mono"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#0A192F]">Compare At ($)</label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="55.00"
-                      value={newComparePrice}
-                      onChange={(e) => setNewComparePrice(e.target.value)}
-                      className="border-[#E5E5E5] bg-[#FAFAFA] font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Narrative & Editorial */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-[#0A192F] border-b border-[#E5E5E5] pb-1">
-                  2. Descriptions & Editorial Story
-                </h3>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#0A192F]">Product Description</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Signature heavyweight garment with reinforced double-needle stitching..."
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    className="w-full rounded-md border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-[#0A192F] outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-[#0A192F]">Editorial Brand Story (Luxury narrative)</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Forged in the heart of Brooklyn. Built for the kinetic pace of NYC street culture..."
-                    value={newEditorialStory}
-                    onChange={(e) => setNewEditorialStory(e.target.value)}
-                    className="w-full rounded-md border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-[#0A192F] outline-none font-serif italic"
-                  />
-                </div>
-              </div>
-
-              {/* Section 3: Product Photography */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-[#0A192F] border-b border-[#E5E5E5] pb-1">
-                  3. Garment Photography & Media *
-                </h3>
-
-                <label
-                  htmlFor="product-image-upload"
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageFiles(e.dataTransfer.files) }}
-                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
-                    isUploading ? 'cursor-wait' : 'cursor-pointer'
-                  } ${
-                    isDragging ? 'border-[#0A192F] bg-[#F3F3F3]' : 'border-[#E5E5E5] bg-[#FAFAFA] hover:border-[#0A192F]/50'
-                  }`}
-                >
-                  {isUploading
-                    ? <Loader2 className="w-5 h-5 animate-spin text-[#0A192F]" />
-                    : <Upload className="w-5 h-5 text-[#0A192F]" />}
-                  <span className="text-xs font-semibold text-[#0A192F]">
-                    {isUploading ? 'Uploading photos…' : 'Click to upload or drag photos here'}
-                  </span>
-                  <span className="text-[10px] text-[#666666]">
-                    JPG, PNG, WebP, or AVIF · up to 15 MB each · the first photo is the cover
-                  </span>
-                  <input
-                    ref={fileInputRef}
-                    id="product-image-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/avif"
-                    multiple
-                    disabled={isUploading}
-                    onChange={(e) => handleImageFiles(e.target.files)}
-                    className="sr-only"
-                  />
-                </label>
-
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Or paste an image URL or /public path"
-                    value={newImageUrlInput}
-                    onChange={(e) => setNewImageUrlInput(e.target.value)}
-                    className="border-[#E5E5E5] bg-[#FAFAFA] text-xs"
-                  />
-                  <Button type="button" onClick={handleAddImage} variant="outline" className="border-[#E5E5E5] text-xs">
-                    Add URL
-                  </Button>
-                </div>
-
-                {newImages.length > 0 && (
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    {newImages.map((img, idx) => (
-                      <div key={`${img}-${idx}`} className="relative w-20 h-24 rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-hidden group">
-                        <img src={img} alt="Product preview" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(idx)}
-                          aria-label="Remove photo"
-                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                        {idx === 0 && (
-                          <span className="absolute bottom-1 left-1 bg-[#0A192F] text-white text-[8px] px-1 py-0.5 rounded font-mono">
-                            Cover
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Section 4: Variants & Stock */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-1">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-[#0A192F]">
-                    4. Size & Color Inventory Variants
-                  </h3>
-                  <Button type="button" size="sm" variant="outline" onClick={handleAddVariantRow} className="h-7 text-xs border-[#E5E5E5]">
-                    + Add Variant Row
-                  </Button>
-                </div>
-
-                <div className="rounded border border-[#E5E5E5] bg-[#FAFAFA] overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-[#F3F3F3] border-b border-[#E5E5E5]">
-                      <tr>
-                        <th className="p-2 text-left font-medium text-[#666666]">Size</th>
-                        <th className="p-2 text-left font-medium text-[#666666]">Color</th>
-                        <th className="p-2 text-left font-medium text-[#666666]">SKU</th>
-                        <th className="p-2 text-left font-medium text-[#666666]">Stock Qty</th>
-                        <th className="p-2 w-8"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {variantsList.map((v, idx) => (
-                        <tr key={idx} className="border-b border-[#E5E5E5] last:border-none">
-                          <td className="p-2">
-                            <select
-                              value={v.size}
-                              onChange={(e) => handleVariantChange(idx, 'size', e.target.value)}
-                              className="h-7 w-20 rounded-md border border-[#E5E5E5] bg-white px-2 text-xs"
-                            >
-                              {VARIANT_SIZES.map((size) => (
-                                <option key={size} value={size}>{size}</option>
-                              ))}
-                            </select>
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              value={v.color}
-                              onChange={(e) => handleVariantChange(idx, 'color', e.target.value)}
-                              className="h-7 w-28 border-[#E5E5E5] bg-white text-xs"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              value={v.sku}
-                              onChange={(e) => handleVariantChange(idx, 'sku', e.target.value)}
-                              className="h-7 w-36 border-[#E5E5E5] bg-white text-xs font-mono"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              min={0}
-                              value={v.inventory_quantity}
-                              onChange={(e) => handleVariantChange(idx, 'inventory_quantity', parseInt(e.target.value) || 0)}
-                              className="h-7 w-20 border-[#E5E5E5] bg-white text-xs font-mono"
-                            />
-                          </td>
-                          <td className="p-2">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveVariantRow(idx)}
-                              aria-label="Remove variant"
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[10px] text-[#666666]">SKUs must be unique across the whole store.</p>
-              </div>
-
-              {/* Section 5: Visibility Controls */}
-              <div className="flex flex-wrap items-center gap-6 p-4 rounded bg-[#FAFAFA] border border-[#E5E5E5]">
-                <label className="flex items-center gap-2 text-xs font-medium text-[#0A192F] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="rounded border-[#E5E5E5] text-[#0A192F]"
-                  />
-                  <span>Live / Published to Store</span>
-                </label>
-
-                <label className="flex items-center gap-2 text-xs font-medium text-[#0A192F] cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="rounded border-[#E5E5E5] text-[#0A192F]"
-                  />
-                  <span>Featured in "Latest Drop" Grid</span>
-                </label>
-              </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} className="border-[#E5E5E5] text-xs">
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting || isUploading} className="bg-[#0A192F] text-white hover:bg-black text-xs font-serif tracking-wider uppercase">
-                  {isSubmitting ? 'Saving Merchandise...' : 'Publish Merchandise'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <ProductFormDialog
+          key={formKey}
+          product={editingProduct}
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSaved={handleSaved}
+        />
       </div>
 
       {/* Filter and Search Bar */}
@@ -733,6 +306,17 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
 
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-2">
+                        {UUID_PATTERN.test(product.id) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-[11px] gap-1 border-[#E5E5E5] text-[#0A192F] hover:bg-[#0A192F] hover:text-white"
+                            onClick={() => openForm(product)}
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Edit
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -799,9 +383,16 @@ export function ProductsClient({ initialProducts }: { initialProducts: any[] }) 
                                         SKU: {variant.sku}
                                       </span>
                                     </div>
-                                    <Badge variant="outline" className="text-[9px] font-mono bg-white border-[#E5E5E5]">
-                                      Stock: {variant.inventory_quantity}
-                                    </Badge>
+                                    <div className="flex flex-col items-end gap-1">
+                                      <Badge variant="outline" className="text-[9px] font-mono bg-white border-[#E5E5E5]">
+                                        Stock: {variant.inventory_quantity}
+                                      </Badge>
+                                      {variant.is_active === false && (
+                                        <Badge variant="outline" className="text-[9px] uppercase tracking-widest bg-[#E5E5E5] text-[#666666]">
+                                          Hidden color
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
 
                                   <div className="flex items-center gap-2 pt-1">
