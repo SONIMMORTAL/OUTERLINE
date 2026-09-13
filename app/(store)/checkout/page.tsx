@@ -24,12 +24,14 @@ import { DELIVERY_ESTIMATE, PAYMENT_HOLD_LABEL } from '@/lib/store-policies'
 
 /* ==========================================================================
    Payment Method Configuration
-   PayPal is the active payment method. Orders are saved as "Awaiting Payment"
-   and confirmed in the admin once the PayPal payment arrives.
-   When Stripe is ready, set STRIPE_ENABLED = true.
+   Both methods save the order as "Awaiting Payment" and reserve its stock first.
+   PayPal: the shopper gets an order number and a PayPal link.
+   Card: the shopper goes straight to Stripe's payment page and returns to /checkout/success.
+   Card payments show only when NEXT_PUBLIC_STRIPE_ENABLED=true (set once Stripe keys and the webhook are configured).
    ========================================================================== */
+type PaymentMethod = 'paypal' | 'stripe'
 const PAYPAL_ENABLED = true
-const STRIPE_ENABLED = false // Enable after Stripe URL verification
+const STRIPE_ENABLED = process.env.NEXT_PUBLIC_STRIPE_ENABLED === 'true'
 
 const STATE_CODES = Object.keys(US_STATE_TAX_RATES).sort()
 
@@ -47,7 +49,7 @@ interface PlacedOrder {
 export default function CheckoutPage() {
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
-  const [selectedMethod, setSelectedMethod] = useState<'paypal' | 'stripe' | null>('paypal')
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>('paypal')
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerName, setCustomerName] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
@@ -72,6 +74,26 @@ export default function CheckoutPage() {
   useEffect(() => {
     setMounted(true)
     useCartStore.persist.rehydrate()
+
+    // Back from Stripe without paying: the cart is untouched, so release the held order and let them try again.
+    const cancelledOrderId = new URLSearchParams(window.location.search).get('cancelled')
+    if (cancelledOrderId) {
+      window.history.replaceState(null, '', '/checkout')
+      if (STRIPE_ENABLED) setSelectedMethod('stripe')
+      toast.info('Card payment cancelled. Your cart is still here.')
+      fetch('/api/checkout/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: cancelledOrderId }),
+      }).catch(() => {})
+    }
+
+    // The browser's Back button can restore this page mid-redirect; don't leave the button spinning.
+    const resetAfterBack = (event: PageTransitionEvent) => {
+      if (event.persisted) setIsProcessing(false)
+    }
+    window.addEventListener('pageshow', resetAfterBack)
+    return () => window.removeEventListener('pageshow', resetAfterBack)
   }, [])
 
   if (!mounted) return null
@@ -193,7 +215,7 @@ export default function CheckoutPage() {
     toast.info('Promo code removed.')
   }
 
-  const handlePayPalCheckout = async () => {
+  const handlePlaceOrder = async (paymentMethod: PaymentMethod) => {
     if (!customerName.trim() || !customerEmail.trim()) {
       toast.error('Please enter your name and email to proceed.')
       return
@@ -204,11 +226,13 @@ export default function CheckoutPage() {
     }
 
     setIsProcessing(true)
+    let redirecting = false
     try {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          paymentMethod,
           customerName,
           customerEmail,
           customerPhone,
@@ -230,6 +254,13 @@ export default function CheckoutPage() {
         return
       }
 
+      if (paymentMethod === 'stripe') {
+        // The cart is cleared on /checkout/success, so it survives if the shopper backs out of Stripe.
+        redirecting = true
+        window.location.assign(data.paymentUrl)
+        return
+      }
+
       setPlacedOrder({
         orderNumber: data.orderNumber,
         paymentUrl: data.paymentUrl,
@@ -242,36 +273,8 @@ export default function CheckoutPage() {
     } catch {
       toast.error('Network error. Please check your connection and try again.')
     } finally {
-      setIsProcessing(false)
+      if (!redirecting) setIsProcessing(false)
     }
-  }
-
-  const handleStripeCheckout = async () => {
-    if (!customerEmail) {
-      toast.error('Please enter your email.')
-      return
-    }
-    setIsProcessing(true)
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: items.map(item => ({ variantId: item.id, quantity: item.quantity })),
-          customerEmail,
-          discountCode: appliedDiscount?.code || ''
-        })
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        toast.error(data.error || 'Checkout failed.')
-      }
-    } catch {
-      toast.error('Failed to connect to payment processor.')
-    }
-    setIsProcessing(false)
   }
 
   return (
@@ -474,7 +477,7 @@ export default function CheckoutPage() {
                         <Lock className="w-4 h-4 text-[#635BFF]" />
                         <span className="text-sm font-semibold text-[#0A192F]">Credit / Debit Card</span>
                       </div>
-                      <p className="text-[11px] text-[#666666] mt-0.5">Secure card payment via Stripe</p>
+                      <p className="text-[11px] text-[#666666] mt-0.5">Card, Apple Pay, or Google Pay on Stripe&apos;s secure payment page.</p>
                     </div>
                   </button>
                 )}
@@ -482,17 +485,14 @@ export default function CheckoutPage() {
 
               {selectedMethod && (
                 <button
-                  onClick={() => {
-                    if (selectedMethod === 'paypal') handlePayPalCheckout()
-                    else if (selectedMethod === 'stripe') handleStripeCheckout()
-                  }}
+                  onClick={() => handlePlaceOrder(selectedMethod)}
                   disabled={isProcessing || !customerEmail || !customerName}
                   className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-[0.15em] uppercase text-sm hover:bg-[#000000] disabled:opacity-50 transition-all rounded-lg shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isProcessing ? (
                     <span className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Placing Order...
+                      {selectedMethod === 'stripe' ? 'Opening Secure Payment...' : 'Placing Order...'}
                     </span>
                   ) : (
                     <span>
@@ -509,7 +509,7 @@ export default function CheckoutPage() {
             <div className="flex items-center gap-3 px-4 py-3 bg-[#FFFFFF] border border-[#E5E5E5] rounded-lg">
               <ShieldCheck className="w-5 h-5 text-green-600 shrink-0" />
               <p className="text-[11px] text-[#666666]">
-                Your personal information is protected. Payment is handled by PayPal; we never see or store your payment details.
+                Your personal information is protected. Payment is handled by {STRIPE_ENABLED ? 'PayPal or Stripe' : 'PayPal'}; we never see or store your payment details.
               </p>
             </div>
           </div>

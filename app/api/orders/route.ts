@@ -4,13 +4,20 @@ import { loadCatalogProducts } from '@/lib/catalog'
 import { calculateOrderTotals } from '@/lib/pricing'
 import { redeemDiscount, releaseDiscount } from '@/lib/discounts-store'
 import {
+  appendAdminNote,
   countRecentOrders,
   createOrder,
   expireUnpaidOrders,
   OutOfStockError,
-  type NewOrderItem
+  setPaymentReference,
+  updateOrder,
+  type NewOrderItem,
+  type OrderRecord
 } from '@/lib/orders'
 import { buildPayPalPaymentUrl } from '@/lib/paypal'
+import { createCheckoutSession, isStripeConfigured } from '@/lib/stripe'
+import { SITE_URL } from '@/lib/site'
+import type { PaymentMethod } from '@/lib/order-status'
 import { sendOrderReservedEmail } from '@/lib/order-notifications'
 import { normalizePhone } from '@/lib/phone'
 import { US_STATE_TAX_RATES } from '@/lib/taxes'
@@ -30,8 +37,28 @@ function text(value: unknown, max: number): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
 }
 
-// Places a pending PayPal order. The browser only says what is in the cart; prices, stock, the discount,
-// shipping, and tax are all decided here. Stock is reserved until the payment hold expires.
+// Where Stripe sends the shopper back. Local development returns to the dev server instead of the live site.
+function checkoutOrigin(req: Request): string {
+  return process.env.NODE_ENV === 'production' ? SITE_URL : new URL(req.url).origin
+}
+
+// Opens a Stripe payment page for the order. If Stripe refuses, the order is cancelled so its stock and promo code go back.
+async function startCardPayment(order: OrderRecord, req: Request): Promise<string | null> {
+  try {
+    const session = await createCheckoutSession(order, checkoutOrigin(req))
+    if (!session.url) throw new Error(`Checkout Session ${session.id} has no URL`)
+    await setPaymentReference(order.id, session.id)
+    return session.url
+  } catch (err) {
+    console.error(`Stripe checkout could not start for order #${order.order_number}:`, err)
+    await updateOrder(order.id, { status: 'cancelled' })
+    await appendAdminNote(order.id, 'Stripe checkout could not be started. Order cancelled; stock and promo code released.')
+    return null
+  }
+}
+
+// Places a pending order paid by PayPal or by card through Stripe. The browser only says what is in the cart;
+// prices, stock, the discount, shipping, and tax are all decided here. Stock is reserved until the payment hold expires.
 export async function POST(req: Request) {
   let claimedDiscountId: string | null = null
   let items: NewOrderItem[] = []
@@ -39,6 +66,11 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => null)
     if (!body || typeof body !== 'object') throw new CheckoutError('Invalid checkout request.')
+
+    const paymentMethod: PaymentMethod = body.paymentMethod === 'stripe' ? 'stripe' : 'paypal'
+    if (paymentMethod === 'stripe' && !isStripeConfigured()) {
+      throw new CheckoutError('Card payments are not available right now. Please choose PayPal.')
+    }
 
     const customerName = text(body.customerName, 120)
     const customerEmail = text(body.customerEmail, 254).toLowerCase()
@@ -136,15 +168,28 @@ export async function POST(req: Request) {
       shipping_amount: totals.shippingAmount,
       tax_amount: totals.taxAmount,
       total_amount: totals.total,
-      payment_method: 'paypal',
+      payment_method: paymentMethod,
       payment_expires_at: new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000).toISOString(),
       items,
     })
     claimedDiscountId = null // the saved order now owns the discount use
-
-    const paymentUrl = buildPayPalPaymentUrl(order)
-    after(() => sendOrderReservedEmail(order, paymentUrl))
     revalidatePath('/') // homepage sold-out badges
+
+    let paymentUrl: string
+    if (paymentMethod === 'stripe') {
+      const url = await startCardPayment(order, req)
+      if (!url) {
+        return NextResponse.json(
+          { error: 'We could not open the card payment page. Please try again, choose PayPal, or contact Support@outerlineusa.com.' },
+          { status: 502 }
+        )
+      }
+      paymentUrl = url
+    } else {
+      paymentUrl = buildPayPalPaymentUrl(order)
+      // Card shoppers go straight to Stripe, so only PayPal orders need the "complete your payment" email.
+      after(() => sendOrderReservedEmail(order, paymentUrl))
+    }
 
     return NextResponse.json({
       orderId: order.id,

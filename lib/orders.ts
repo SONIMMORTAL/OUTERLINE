@@ -251,6 +251,11 @@ export async function appendAdminNote(id: string, note: string): Promise<void> {
   await supabase.from('orders').update({ admin_notes }).eq('id', id)
 }
 
+export async function setPaymentReference(id: string, reference: string): Promise<void> {
+  const { error } = await createServiceClient().from('orders').update({ payment_reference: reference }).eq('id', id)
+  if (error) throw new Error(`Could not save the payment reference: ${error.message}`)
+}
+
 export async function extendPaymentHold(id: string, until: Date): Promise<void> {
   await createServiceClient()
     .from('orders')

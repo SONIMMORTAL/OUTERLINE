@@ -17,3 +17,14 @@ export const REVENUE_STATUSES: readonly OrderStatus[] = ['paid', 'processing', '
 export function isOrderStatus(value: string): value is OrderStatus {
   return (ORDER_STATUSES as readonly string[]).includes(value)
 }
+
+export type PaymentMethod = 'paypal' | 'stripe'
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  paypal: 'PayPal',
+  stripe: 'Card (Stripe)',
+}
+
+export function paymentMethodLabel(method: string): string {
+  return PAYMENT_METHOD_LABELS[method] ?? method
+}

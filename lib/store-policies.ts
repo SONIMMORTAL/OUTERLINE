@@ -3,7 +3,8 @@ export const DELIVERY_ESTIMATE = '3–7 business days'
 export const FREE_SHIPPING_THRESHOLD = 100
 export const DEFECT_CLAIM_WINDOW_DAYS = 10
 
-// Unpaid PayPal orders hold their stock and discount use this long, then cancel automatically.
+// Unpaid orders hold their stock and discount use this long, then cancel automatically. A card order's
+// Stripe payment page closes at the same time.
 export const PAYMENT_HOLD_MINUTES = 60
 export const PAYMENT_HOLD_LABEL = '1 hour'
 

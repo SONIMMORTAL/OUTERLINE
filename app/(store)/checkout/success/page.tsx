@@ -1,67 +1,108 @@
-import { CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { after } from 'next/server'
+import { Check, Clock } from 'lucide-react'
+import { getOrder, type OrderRecord } from '@/lib/orders'
+import { getStripe, isStripeConfigured } from '@/lib/stripe'
+import { confirmCheckoutPayment } from '@/lib/stripe-orders'
+import { DELIVERY_ESTIMATE } from '@/lib/store-policies'
+import ClearCart from './ClearCart'
 
-export default async function CheckoutSuccessPage({
-  searchParams
-}: {
-  searchParams: Promise<{ session_id?: string }>
-}) {
-  const { session_id } = await searchParams
-  const supabase = await createClient()
+export const metadata = {
+  title: 'Order Confirmation',
+  robots: { index: false },
+}
 
-  let order: any = null
+interface PaidCheckout {
+  order: OrderRecord
+  paid: boolean
+}
 
-  if (session_id) {
-    const { data } = await supabase
-      .from('orders')
-      .select('*, order_items(*, product:products(*))')
-      .eq('stripe_session_id', session_id)
-      .single()
-    
-    order = data
+// Stripe returns here with ?session_id=cs_... The session, not the query string, decides what the shopper sees.
+async function loadCheckout(sessionId: string | undefined): Promise<PaidCheckout | null> {
+  if (!sessionId?.startsWith('cs_') || !isStripeConfigured()) return null
+  try {
+    const session = await getStripe().checkout.sessions.retrieve(sessionId)
+    const order = session.client_reference_id ? await getOrder(session.client_reference_id) : null
+    if (!order || session.status !== 'complete') return null
+
+    const paid = session.payment_status === 'paid'
+    if (paid && (order.status === 'pending' || order.status === 'cancelled')) {
+      // Confirm now in case the webhook is slow. Whichever runs second finds the order already paid.
+      after(() => confirmCheckoutPayment(session).catch((err) => console.error('[stripe] Success-page confirmation failed:', err)))
+    }
+    return { order, paid }
+  } catch (err) {
+    console.error('[stripe] Could not load the checkout session:', err)
+    return null
   }
+}
+
+export default async function CheckoutSuccessPage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
+  const { session_id } = await searchParams
+  const checkout = await loadCheckout(session_id)
+  const order = checkout?.order
+  const processing = checkout?.paid === false
 
   return (
-    <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-24 bg-[#FFFFFF]">
-      <div className="max-w-xl w-full bg-[#F9F9F9] border border-[#E5E5E5] rounded-xl p-8 md:p-12 flex flex-col items-center text-center space-y-6">
-        <CheckCircle className="w-16 h-16 text-[#0A192F]" />
-        
-        <h1 className="font-serif text-3xl md:text-4xl text-[#0A192F]">
-          ORDER CONFIRMED
-        </h1>
-        
-        <p className="text-[#666666]">
-          Thank you for your purchase. We've received your order and will begin processing it shortly.
-        </p>
+    <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center px-4 pt-32 pb-16">
+      <div className="w-full max-w-lg bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-8 md:p-10 shadow-xl space-y-6 text-center">
+        {checkout && <ClearCart />}
 
-        {order && (
-          <div className="w-full bg-[#F3F3F3] border border-[#E5E5E5] rounded-lg p-6 text-left space-y-4 my-6">
-            <div className="flex justify-between items-center border-b border-[#E5E5E5] pb-4">
-              <span className="text-[#666666] text-sm">Order Number</span>
-              <span className="text-[#0A192F] font-mono">{order.id.slice(0, 8).toUpperCase()}</span>
-            </div>
-            
-            <div className="flex justify-between items-center border-b border-[#E5E5E5] pb-4">
-              <span className="text-[#666666] text-sm">Total Paid</span>
-              <span className="text-[#0A192F]">${(order.total_amount || 0).toFixed(2)}</span>
-            </div>
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${processing ? 'bg-amber-500/10' : 'bg-green-500/10'}`}>
+          {processing ? <Clock className="w-8 h-8 text-amber-600" /> : <Check className="w-8 h-8 text-green-600" />}
+        </div>
 
-            <div className="pt-2">
-              <h3 className="text-[#666666] text-sm mb-2">Shipping to</h3>
-              <p className="text-[#0A192F] text-sm whitespace-pre-wrap">
-                {order.shipping_address ? JSON.stringify(order.shipping_address, null, 2) : 'Address not found'}
-              </p>
-            </div>
+        {order ? (
+          <div className="space-y-2">
+            <p className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#666666]">Order #{order.order_number}</p>
+            <h1 className="font-serif text-2xl text-[#0A192F]">{processing ? 'Payment processing' : 'Payment received'}</h1>
+            <p className="text-sm text-[#666666] leading-relaxed">
+              Thank you, <span className="font-semibold text-[#0A192F]">{order.customer_name}</span>.{' '}
+              {processing
+                ? <>Your payment of <span className="font-semibold text-[#0A192F]">${order.total_amount.toFixed(2)}</span> is still clearing. Your items are reserved, and we&apos;ll email you once it goes through.</>
+                : <>We received your payment of <span className="font-semibold text-[#0A192F]">${order.total_amount.toFixed(2)}</span> and are getting your order ready.</>}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <h1 className="font-serif text-2xl text-[#0A192F]">Thank you</h1>
+            <p className="text-sm text-[#666666] leading-relaxed">
+              If you completed your payment, a confirmation is on its way to your email. You can check your order anytime with your email and order number.
+            </p>
           </div>
         )}
 
-        <Link
-          href="/"
-          className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest text-sm hover:bg-[#000000] transition-colors"
-        >
-          CONTINUE SHOPPING
-        </Link>
+        {order && (
+          <div className="bg-[#F9F9F9] border border-[#E5E5E5] rounded-lg p-4 text-left space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#0A192F]">What Happens Next</p>
+            <ol className="text-xs text-[#666666] space-y-1.5 leading-relaxed list-decimal list-inside">
+              <li>{processing ? 'Once your payment clears, a confirmation goes to' : 'A confirmation is sent to'} <span className="font-mono text-[#0A192F]">{order.customer_email}</span>.</li>
+              <li>We prepare your order and ship it to {order.shipping_address?.city}, {order.shipping_address?.state}.</li>
+              <li>Standard delivery takes {DELIVERY_ESTIMATE}, and tracking appears on your order page.</li>
+            </ol>
+          </div>
+        )}
+
+        {order && (
+          <p className="text-[11px] text-[#666666]">
+            Save your order number. Check its status anytime with <span className="font-mono">{order.customer_email}</span> and #{order.order_number}.
+          </p>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href="/orders"
+            className="flex-1 px-6 py-3 border border-[#0A192F] text-[#0A192F] font-serif tracking-widest text-xs uppercase hover:bg-[#0A192F] hover:text-white transition-colors"
+          >
+            Order Status
+          </Link>
+          <Link
+            href="/"
+            className="flex-1 px-6 py-3 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-widest text-xs uppercase hover:bg-[#000000] transition-colors"
+          >
+            Return to Store
+          </Link>
+        </div>
       </div>
     </div>
   )

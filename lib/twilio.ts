@@ -51,14 +51,6 @@ export async function sendSMS(to: string, body: string) {
   }
 }
 
-export async function sendAdminAlert(orderNumber: number | string, amount: number, itemCount: number, city: string) {
-  const adminPhone = process.env.ADMIN_PHONE_NUMBER || '+17186007410';
-  if (!adminPhone) return;
-
-  const body = `OUTERLINE Alert: New order #${orderNumber} for $${(amount / 100).toFixed(2)} (${itemCount} items) shipping to ${city}.`;
-  await sendSMS(adminPhone, body);
-}
-
 export async function sendVendorPO(orderNumber: number | string, skuList: string[]) {
   const vendorPhone = process.env.VENDOR_PHONE_NUMBER || '+17186007410';
   if (!vendorPhone) return;

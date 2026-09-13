@@ -4,6 +4,7 @@ import { sendSMS, sendVendorPO } from '@/lib/twilio'
 import { trackingUrl } from '@/lib/carriers'
 import { SITE_URL } from '@/lib/site'
 import { DELIVERY_ESTIMATE } from '@/lib/store-policies'
+import { paymentMethodLabel, type PaymentMethod } from '@/lib/order-status'
 import OrderConfirmation from '@/components/emails/OrderConfirmation'
 import VendorPurchaseOrder from '@/components/emails/VendorPurchaseOrder'
 import type { OrderRecord } from '@/lib/orders'
@@ -54,7 +55,7 @@ function adminPaidOrderHtml(order: OrderRecord, outOfStock: boolean): string {
   return `
     <h2>Paid: Outerline order #${order.order_number}</h2>
     ${outOfStock ? '<p style="color:#b91c1c"><strong>Stock problem:</strong> this payment arrived after the order was cancelled and the items are no longer in stock. Refund or restock before shipping.</p>' : ''}
-    <p><strong>Payment:</strong> ${money(order.total_amount)} via PayPal${order.payment_reference ? ` (transaction ${escapeHtml(order.payment_reference)})` : ''}</p>
+    <p><strong>Payment:</strong> ${money(order.total_amount)} via ${paymentMethodLabel(order.payment_method)}${order.payment_reference ? ` (transaction ${escapeHtml(order.payment_reference)})` : ''}</p>
     <p><strong>Customer:</strong> ${escapeHtml(order.customer_name)} &lt;${escapeHtml(order.customer_email)}&gt;${order.customer_phone ? ` · ${escapeHtml(order.customer_phone)}` : ''}</p>
     <p><strong>Ship to:</strong><br/>
       ${escapeHtml(address?.line1)}${address?.line2 ? `<br/>${escapeHtml(address.line2)}` : ''}<br/>
@@ -91,7 +92,7 @@ export async function sendOrderReservedEmail(order: OrderRecord, paymentUrl: str
 
 export async function sendOrderPaidNotifications(
   order: OrderRecord,
-  { source, outOfStock = false }: { source: 'paypal' | 'admin'; outOfStock?: boolean }
+  { source, outOfStock = false }: { source: PaymentMethod | 'admin'; outOfStock?: boolean }
 ): Promise<void> {
   if (notificationsDisabled()) {
     console.log(`[order notifications disabled] paid notifications for order #${order.order_number} (${source})`)
@@ -103,17 +104,17 @@ export async function sendOrderPaidNotifications(
   const count = itemCount(order)
 
   // An admin marking the order paid already knows; only automatic confirmations text the admin.
-  if (source === 'paypal') {
+  if (source !== 'admin') {
     tasks.push(sendSMS(
       adminPhone(),
-      `OUTERLINE PAID order #${order.order_number}: ${money(order.total_amount)} via PayPal (${count} item${count === 1 ? '' : 's'}) from ${order.customer_name}. Ship to ${address?.city}, ${address?.state}.` +
+      `OUTERLINE PAID order #${order.order_number}: ${money(order.total_amount)} via ${paymentMethodLabel(source)} (${count} item${count === 1 ? '' : 's'}) from ${order.customer_name}. Ship to ${address?.city}, ${address?.state}.` +
         (outOfStock ? ' WARNING: paid after cancellation and stock is gone. Refund or restock.' : '')
     ))
   }
 
   const resend = getResend()
   if (resend) {
-    if (source === 'paypal' && process.env.ADMIN_EMAIL) {
+    if (source !== 'admin' && process.env.ADMIN_EMAIL) {
       tasks.push(resend.emails.send({
         from: fromAddress(),
         to: process.env.ADMIN_EMAIL,
