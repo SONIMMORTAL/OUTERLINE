@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,6 +21,7 @@ import { toast } from 'sonner'
 import { calculateOrderTotals } from '@/lib/pricing'
 import { US_STATE_TAX_RATES } from '@/lib/taxes'
 import { DELIVERY_ESTIMATE, PAYMENT_HOLD_LABEL } from '@/lib/store-policies'
+import { normalizePhone } from '@/lib/phone'
 
 /* ==========================================================================
    Payment Method Configuration
@@ -34,8 +35,14 @@ const PAYPAL_ENABLED = true
 const STRIPE_ENABLED = process.env.NEXT_PUBLIC_STRIPE_ENABLED === 'true'
 
 const STATE_CODES = Object.keys(US_STATE_TAX_RATES).sort()
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const ZIP_PATTERN = /^\d{5}(-\d{4})?$/
+// How long to wait for the browser to leave for Stripe before offering a link to tap instead.
+const SLOW_REDIRECT_MS = 4000
 
-const inputClass = 'w-full bg-[#F9F9F9] border border-[#E5E5E5] text-[#0A192F] text-xs rounded-lg px-4 py-3 focus:outline-none focus:border-[#0A192F] focus:bg-[#FFFFFF] transition-all'
+const inputBaseClass = 'w-full bg-[#F9F9F9] border text-[#0A192F] text-xs rounded-lg px-4 py-3 focus:outline-none focus:bg-[#FFFFFF] transition-all'
+const inputClass = `${inputBaseClass} border-[#E5E5E5] focus:border-[#0A192F]`
+const invalidInputClass = `${inputBaseClass} border-red-500 focus:border-red-600`
 const labelClass = 'text-[10px] uppercase tracking-widest text-[#666666] font-semibold'
 
 interface PlacedOrder {
@@ -44,6 +51,31 @@ interface PlacedOrder {
   total: number
   email: string
   name: string
+}
+
+interface CheckoutDetails {
+  name: string
+  email: string
+  phone: string
+  address: { line1: string; line2: string; city: string; state: string; zip: string }
+}
+
+// field is the input to highlight, or null for problems the server reports about the whole order.
+interface CheckoutProblem {
+  field: string | null
+  message: string
+}
+
+// The same checks the server makes, so the shopper sees what to fix next to the button instead of a click that seems to do nothing.
+function findCheckoutProblem({ name, email, phone, address }: CheckoutDetails): CheckoutProblem | null {
+  if (!name.trim()) return { field: 'checkout-name', message: 'Please enter your full name.' }
+  if (!EMAIL_PATTERN.test(email.trim())) return { field: 'checkout-email', message: 'Please enter a valid email address.' }
+  if (phone.trim() && !normalizePhone(phone)) return { field: 'checkout-phone', message: 'Please enter a valid phone number, or leave it blank.' }
+  if (!address.line1.trim()) return { field: 'checkout-line1', message: 'Please enter your street address.' }
+  if (!address.city.trim()) return { field: 'checkout-city', message: 'Please enter your city.' }
+  if (!US_STATE_TAX_RATES[address.state]) return { field: 'checkout-state', message: 'Please choose your state.' }
+  if (!ZIP_PATTERN.test(address.zip.trim())) return { field: 'checkout-zip', message: 'Please enter a valid 5-digit ZIP code.' }
+  return null
 }
 
 export default function CheckoutPage() {
@@ -62,6 +94,9 @@ export default function CheckoutPage() {
   })
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [formError, setFormError] = useState<CheckoutProblem | null>(null)
+  const [slowPaymentUrl, setSlowPaymentUrl] = useState<string | null>(null)
+  const slowRedirectTimer = useRef<number | undefined>(undefined)
 
   // Promo code state
   const [promoCodeInput, setPromoCodeInput] = useState('')
@@ -90,7 +125,10 @@ export default function CheckoutPage() {
 
     // The browser's Back button can restore this page mid-redirect; don't leave the button spinning.
     const resetAfterBack = (event: PageTransitionEvent) => {
-      if (event.persisted) setIsProcessing(false)
+      if (!event.persisted) return
+      window.clearTimeout(slowRedirectTimer.current)
+      setSlowPaymentUrl(null)
+      setIsProcessing(false)
     }
     window.addEventListener('pageshow', resetAfterBack)
     return () => window.removeEventListener('pageshow', resetAfterBack)
@@ -215,16 +253,49 @@ export default function CheckoutPage() {
     toast.info('Promo code removed.')
   }
 
-  const handlePlaceOrder = async (paymentMethod: PaymentMethod) => {
-    if (!customerName.trim() || !customerEmail.trim()) {
-      toast.error('Please enter your name and email to proceed.')
-      return
-    }
-    if (!shippingAddress.line1.trim() || !shippingAddress.city.trim() || !shippingAddress.state || !shippingAddress.zip.trim()) {
-      toast.error('Please complete your shipping address.')
-      return
-    }
+  const fieldProps = (id: string) => ({
+    id,
+    className: formError?.field === id ? invalidInputClass : inputClass,
+    'aria-invalid': formError?.field === id || undefined,
+    'aria-describedby': formError?.field === id ? 'checkout-error' : undefined,
+  })
 
+  const handlePlaceOrder = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isProcessing || !selectedMethod) return
+    const paymentMethod = selectedMethod
+
+    // Some autofill tools and password managers fill fields without React noticing, so use what is actually in the form.
+    const form = new FormData(event.currentTarget)
+    const field = (name: string) => String(form.get(name) ?? '')
+    const details: CheckoutDetails = {
+      name: field('name'),
+      email: field('email'),
+      phone: field('tel'),
+      address: {
+        line1: field('address-line1'),
+        line2: field('address-line2'),
+        city: field('city'),
+        state: field('state'),
+        zip: field('zip'),
+      },
+    }
+    setCustomerName(details.name)
+    setCustomerEmail(details.email)
+    setCustomerPhone(details.phone)
+    setShippingAddress(details.address)
+
+    const problem = findCheckoutProblem(details)
+    setFormError(problem)
+    if (problem?.field) {
+      const input = document.getElementById(problem.field)
+      input?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      input?.focus({ preventScroll: true })
+    }
+    if (problem) return
+
+    window.clearTimeout(slowRedirectTimer.current)
+    setSlowPaymentUrl(null)
     setIsProcessing(true)
     let redirecting = false
     try {
@@ -233,10 +304,10 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentMethod,
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress,
+          customerName: details.name,
+          customerEmail: details.email,
+          customerPhone: details.phone,
+          shippingAddress: details.address,
           discountCode: appliedDiscount?.code || '',
           items: items.map(item => ({
             id: item.id,
@@ -250,7 +321,7 @@ export default function CheckoutPage() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        toast.error(data.error || 'We could not place your order. Please try again.')
+        setFormError({ field: null, message: data.error || 'We could not place your order. Please try again.' })
         return
       }
 
@@ -258,6 +329,8 @@ export default function CheckoutPage() {
         // The cart is cleared on /checkout/success, so it survives if the shopper backs out of Stripe.
         redirecting = true
         window.location.assign(data.paymentUrl)
+        // Some in-app browsers and blockers stop the redirect; give the shopper a link to tap rather than a spinner forever.
+        slowRedirectTimer.current = window.setTimeout(() => setSlowPaymentUrl(data.paymentUrl), SLOW_REDIRECT_MS)
         return
       }
 
@@ -265,13 +338,13 @@ export default function CheckoutPage() {
         orderNumber: data.orderNumber,
         paymentUrl: data.paymentUrl,
         total: data.totals.total,
-        email: customerEmail.trim(),
-        name: customerName.trim(),
+        email: details.email.trim(),
+        name: details.name.trim(),
       })
       clearCart()
       window.scrollTo({ top: 0 })
     } catch {
-      toast.error('Network error. Please check your connection and try again.')
+      setFormError({ field: null, message: 'Network error. Please check your connection and try again.' })
     } finally {
       if (!redirecting) setIsProcessing(false)
     }
@@ -294,9 +367,14 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
 
           {/* Left Column — Customer Info + Payment */}
-          <div className="lg:col-span-3 space-y-8">
+          <form
+            onSubmit={handlePlaceOrder}
+            onInput={() => { if (formError) setFormError(null) }}
+            noValidate
+            className="lg:col-span-3 space-y-8"
+          >
             <div className="flex items-center gap-3">
-              <button onClick={() => router.back()} aria-label="Go back" className="p-2 hover:bg-[#F3F3F3] rounded-md transition-colors">
+              <button type="button" onClick={() => router.back()} aria-label="Go back" className="p-2 hover:bg-[#F3F3F3] rounded-md transition-colors">
                 <ArrowLeft className="w-4 h-4 text-[#0A192F]" />
               </button>
               <h1 className="font-serif text-2xl md:text-3xl text-[#0A192F] tracking-tight">Secure Checkout</h1>
@@ -311,40 +389,40 @@ export default function CheckoutPage() {
                 <div className="space-y-1.5">
                   <label htmlFor="checkout-name" className={labelClass}>Full Name *</label>
                   <input
-                    id="checkout-name"
+                    {...fieldProps('checkout-name')}
+                    name="name"
                     type="text"
                     autoComplete="name"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="John Doe"
                     required
-                    className={inputClass}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="checkout-email" className={labelClass}>Email Address *</label>
                   <input
-                    id="checkout-email"
+                    {...fieldProps('checkout-email')}
+                    name="email"
                     type="email"
                     autoComplete="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
-                    className={inputClass}
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <label htmlFor="checkout-phone" className={labelClass}>Phone (Optional, for delivery questions)</label>
                   <input
-                    id="checkout-phone"
+                    {...fieldProps('checkout-phone')}
+                    name="tel"
                     type="tel"
                     autoComplete="tel"
                     inputMode="tel"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder="(718) 555-0123"
-                    className={inputClass}
                   />
                 </div>
               </div>
@@ -359,48 +437,48 @@ export default function CheckoutPage() {
                 <div className="space-y-1.5">
                   <label htmlFor="checkout-line1" className={labelClass}>Address Line 1 *</label>
                   <input
-                    id="checkout-line1"
+                    {...fieldProps('checkout-line1')}
+                    name="address-line1"
                     type="text"
                     autoComplete="address-line1"
                     value={shippingAddress.line1}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, line1: e.target.value })}
                     placeholder="123 Main Street"
-                    className={inputClass}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="checkout-line2" className={labelClass}>Apt / Suite (Optional)</label>
                   <input
-                    id="checkout-line2"
+                    {...fieldProps('checkout-line2')}
+                    name="address-line2"
                     type="text"
                     autoComplete="address-line2"
                     value={shippingAddress.line2}
                     onChange={(e) => setShippingAddress({ ...shippingAddress, line2: e.target.value })}
                     placeholder="Apt 4B"
-                    className={inputClass}
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="checkout-city" className={labelClass}>City *</label>
                     <input
-                      id="checkout-city"
+                      {...fieldProps('checkout-city')}
+                      name="city"
                       type="text"
                       autoComplete="address-level2"
                       value={shippingAddress.city}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                       placeholder="Brooklyn"
-                      className={inputClass}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="checkout-state" className={labelClass}>State *</label>
                     <select
-                      id="checkout-state"
+                      {...fieldProps('checkout-state')}
+                      name="state"
                       autoComplete="address-level1"
                       value={shippingAddress.state}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                      className={inputClass}
                     >
                       <option value="">Select</option>
                       {STATE_CODES.map((code) => (
@@ -411,14 +489,14 @@ export default function CheckoutPage() {
                   <div className="space-y-1.5">
                     <label htmlFor="checkout-zip" className={labelClass}>ZIP *</label>
                     <input
-                      id="checkout-zip"
+                      {...fieldProps('checkout-zip')}
+                      name="zip"
                       type="text"
                       autoComplete="postal-code"
                       inputMode="numeric"
                       value={shippingAddress.zip}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, zip: e.target.value })}
                       placeholder="11201"
-                      className={inputClass}
                     />
                   </div>
                 </div>
@@ -435,6 +513,7 @@ export default function CheckoutPage() {
               <div className="space-y-3">
                 {PAYPAL_ENABLED && (
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod('paypal')}
                     className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${
                       selectedMethod === 'paypal'
@@ -460,6 +539,7 @@ export default function CheckoutPage() {
 
                 {STRIPE_ENABLED && (
                   <button
+                    type="button"
                     onClick={() => setSelectedMethod('stripe')}
                     className={`w-full flex items-center gap-4 p-4 rounded-lg border-2 transition-all text-left ${
                       selectedMethod === 'stripe'
@@ -483,10 +563,20 @@ export default function CheckoutPage() {
                 )}
               </div>
 
+              {formError && (
+                <p
+                  id="checkout-error"
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700"
+                >
+                  {formError.message}
+                </p>
+              )}
+
               {selectedMethod && (
                 <button
-                  onClick={() => handlePlaceOrder(selectedMethod)}
-                  disabled={isProcessing || !customerEmail || !customerName}
+                  type="submit"
+                  disabled={isProcessing}
                   className="w-full py-4 bg-[#0A192F] text-[#FFFFFF] font-serif tracking-[0.15em] uppercase text-sm hover:bg-[#000000] disabled:opacity-50 transition-all rounded-lg shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isProcessing ? (
@@ -503,6 +593,13 @@ export default function CheckoutPage() {
                   )}
                 </button>
               )}
+
+              {slowPaymentUrl && isProcessing && (
+                <p className="text-center text-xs text-[#666666]">
+                  Payment page not opening?{' '}
+                  <a href={slowPaymentUrl} className="font-semibold text-[#0A192F] underline">Tap here to continue to secure payment</a>
+                </p>
+              )}
             </div>
 
             {/* Security Badge */}
@@ -512,7 +609,7 @@ export default function CheckoutPage() {
                 Your personal information is protected. Payment is handled by {STRIPE_ENABLED ? 'PayPal or Stripe' : 'PayPal'}; we never see or store your payment details.
               </p>
             </div>
-          </div>
+          </form>
 
           {/* Right Column — Order Summary */}
           <div className="lg:col-span-2">
