@@ -57,7 +57,7 @@ export default function Navbar() {
         {/* 10Deep-Style Black Announcement Top Bar */}
         <TopAnnouncementBar />
 
-        {/* Main Navbar Header */}
+        {/* Main Navbar Header — changing the bar or header heights? Update --header-height in app/globals.css */}
         <div className={`w-full transition-all duration-300 ${
           isScrolled
             ? 'bg-[#FFFFFF]/95 backdrop-blur-xl border-b border-[#E5E5E5] shadow-xs'

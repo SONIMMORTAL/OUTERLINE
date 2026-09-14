@@ -112,6 +112,22 @@
   --sidebar-accent-foreground: #0A192F;
   --sidebar-border: #E5E5E5;
   --sidebar-ring: #0A192F;
+
+  /* Height of the fixed store header in components/store/Navbar.tsx: announcement bar (h-8, sm:h-9) + nav (h-16, md:h-20) + its 1px border.
+     Full-screen sections start below it so nothing sits hidden under the header. Keep in sync with the Navbar. */
+  --header-height: calc(6rem + 1px);
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --header-height: calc(6.25rem + 1px);
+  }
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --header-height: calc(7.25rem + 1px);
+  }
 }
 
 /* ============================================================================

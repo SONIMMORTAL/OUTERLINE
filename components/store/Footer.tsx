@@ -95,8 +95,9 @@ export default function Footer() {
             <div>
               <h4 className="text-[#0A192F] font-brand font-bold tracking-[0.15em] text-xs mb-4 uppercase">JOIN THE LIST</h4>
               <p className="text-[#666666] text-xs mb-4">Early access to drops. No spam.</p>
-              <form 
-                className="flex gap-2" 
+              {/* The button wraps under the field when the column is narrow (desktop footer columns), instead of poking past the page edge. */}
+              <form
+                className="flex flex-wrap gap-2"
                 onSubmit={async (e) => {
                   e.preventDefault()
                   const form = e.currentTarget
@@ -124,12 +125,12 @@ export default function Footer() {
                   type="email"
                   name="email"
                   placeholder="EMAIL ADDRESS"
-                  className="bg-[#F9F9F9] border border-[#E5E5E5] text-[#0A192F] text-xs px-4 py-3 flex-1 focus:outline-none focus:border-[#0A192F] transition-colors placeholder:text-[#666666] placeholder:tracking-widest"
+                  className="bg-[#F9F9F9] border border-[#E5E5E5] text-[#0A192F] text-xs px-4 py-3 min-w-0 flex-[999_1_10rem] focus:outline-none focus:border-[#0A192F] transition-colors placeholder:text-[#666666] placeholder:tracking-widest"
                   required
                 />
                 <button
                   type="submit"
-                  className="bg-[#0A192F] text-[#FFFFFF] px-4 py-3 text-xs tracking-widest uppercase hover:bg-[#000000] transition-colors font-medium cursor-pointer"
+                  className="bg-[#0A192F] text-[#FFFFFF] px-4 py-3 text-xs tracking-widest uppercase hover:bg-[#000000] transition-colors font-medium cursor-pointer flex-[1_0_auto]"
                 >
                   SUBSCRIBE
                 </button>

@@ -155,15 +155,14 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     handleThumbnailClick(prevItem)
   }
 
-  // Auto-scroll thumbnails when active image changes
+  // Center the active thumbnail in its strip when the active image changes. Only the strip scrolls: scrollIntoView
+  // also scrolled the page, so product pages opened scrolled past the photo on screens shorter than the gallery.
   useEffect(() => {
-    if (thumbnailRefs.current[currentIndex]) {
-      thumbnailRefs.current[currentIndex]?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
+    const strip = thumbnailsRef.current
+    const thumb = thumbnailRefs.current[currentIndex]
+    if (!strip || !thumb) return
+    const thumbLeft = strip.scrollLeft + thumb.getBoundingClientRect().left - strip.getBoundingClientRect().left
+    strip.scrollTo({ left: thumbLeft - (strip.clientWidth - thumb.offsetWidth) / 2, behavior: 'smooth' })
   }, [currentIndex])
 
   // Touch swipe support
